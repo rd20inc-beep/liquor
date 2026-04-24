@@ -15,7 +15,7 @@ export function Button({
   const base =
     'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50';
   const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-500 text-white focus:ring-blue-400',
+    primary: 'bg-violet-600 hover:bg-violet-500 text-white focus:ring-violet-400',
     secondary: 'bg-slate-700 hover:bg-slate-600 text-slate-100 focus:ring-slate-400',
     ghost: 'bg-transparent hover:bg-slate-800 text-slate-200',
     danger: 'bg-red-600 hover:bg-red-500 text-white focus:ring-red-400',
@@ -29,7 +29,7 @@ export function Input({
 }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${className}`}
+      className={`w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 ${className}`}
       {...props}
     />
   );
@@ -42,7 +42,7 @@ export function Select({
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={`w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${className}`}
+      className={`w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 ${className}`}
       {...props}
     >
       {children}
@@ -141,7 +141,7 @@ export function Badge({
     green: 'bg-emerald-900/60 text-emerald-300',
     amber: 'bg-amber-900/60 text-amber-300',
     red: 'bg-red-900/60 text-red-300',
-    blue: 'bg-blue-900/60 text-blue-300',
+    blue: 'bg-violet-900/60 text-violet-300',
   };
   return (
     <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${tones[tone]}`}>
@@ -165,7 +165,7 @@ export function Tile({
     green: 'border-l-emerald-600',
     amber: 'border-l-amber-500',
     red: 'border-l-red-500',
-    blue: 'border-l-blue-500',
+    blue: 'border-l-violet-500',
   };
   return (
     <div
@@ -183,7 +183,7 @@ export function Tile({
 export function Spinner({ label }: { label?: string }) {
   return (
     <div className="flex items-center gap-2 text-sm text-slate-400">
-      <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" />
+      <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-600 border-t-violet-500" />
       {label && <span>{label}</span>}
     </div>
   );

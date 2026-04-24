@@ -73,12 +73,12 @@ function PaymentsList() {
                     onClick={() => void navigate({ to: '/payments/$id', params: { id: p.id } })}
                     className="cursor-pointer border-t border-slate-800/60 hover:bg-slate-900/60"
                   >
-                    <td className="py-2 font-mono text-xs text-blue-400">{p.receipt_no}</td>
+                    <td className="py-2 font-mono text-xs text-violet-400">{p.receipt_no}</td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <Link
                         to="/customers/$id"
                         params={{ id: p.customer_id }}
-                        className="text-slate-200 hover:text-blue-400"
+                        className="text-slate-200 hover:text-violet-400"
                       >
                         {p.customer_name}
                       </Link>{' '}

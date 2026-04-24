@@ -98,7 +98,7 @@ function NewCustomer() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-100">New customer</h1>
-        <Link to="/customers" className="text-sm text-blue-400 hover:underline">
+        <Link to="/customers" className="text-sm text-violet-400 hover:underline">
           ← All customers
         </Link>
       </div>

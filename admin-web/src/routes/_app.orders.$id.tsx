@@ -222,7 +222,7 @@ function OrderDetail() {
     return (
       <div className="space-y-2">
         <ErrorNote message={`Could not load order (id=${id}): ${msg}`} />
-        <Link to="/orders" className="text-sm text-blue-400 hover:underline">
+        <Link to="/orders" className="text-sm text-violet-400 hover:underline">
           ← Back to orders
         </Link>
       </div>
@@ -250,14 +250,14 @@ function OrderDetail() {
             <Link
               to="/customers/$id"
               params={{ id: o.customer_id }}
-              className="hover:text-blue-400"
+              className="hover:text-violet-400"
             >
               {o.customer_name}
             </Link>{' '}
             <span className="text-slate-500">({o.customer_code})</span> · {o.order_date} · {o.channel}
           </div>
         </div>
-        <Link to="/orders" className="text-sm text-blue-400 hover:underline">
+        <Link to="/orders" className="text-sm text-violet-400 hover:underline">
           ← Orders
         </Link>
       </div>
@@ -354,7 +354,7 @@ function OrderDetail() {
                   <div>
                     <a
                       href={`/invoices/${tiedInvoice.id}`}
-                      className="font-mono text-sm text-blue-400 hover:underline"
+                      className="font-mono text-sm text-violet-400 hover:underline"
                     >
                       {tiedInvoice.invoice_no}
                     </a>
@@ -397,7 +397,7 @@ function OrderDetail() {
                   </div>
                   <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-800">
                     <div
-                      className={`h-full ${pct === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                      className={`h-full ${pct === 100 ? 'bg-emerald-500' : 'bg-violet-500'}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -426,7 +426,7 @@ function OrderDetail() {
                 .map((evt) => {
                   const icon =
                     evt.action === 'create'
-                      ? { sym: '+', tone: 'bg-blue-600' }
+                      ? { sym: '+', tone: 'bg-violet-600' }
                       : evt.action === 'override'
                         ? { sym: '!', tone: 'bg-amber-500' }
                         : evt.action === 'approve'

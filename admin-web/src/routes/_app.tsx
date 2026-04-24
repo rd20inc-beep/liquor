@@ -33,7 +33,7 @@ function AppShell() {
     <div className="flex min-h-screen">
       <aside className="w-56 shrink-0 border-r border-slate-800 bg-slate-950/60 p-4">
         <div className="mb-6 flex items-center gap-2">
-          <span className="inline-block h-6 w-6 rounded-md bg-blue-600" />
+          <span className="inline-block h-6 w-6 rounded-md bg-violet-600" />
           <span className="text-sm font-semibold text-slate-100">Liquor OS</span>
         </div>
         <nav className="space-y-1">
