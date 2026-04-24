@@ -24,37 +24,43 @@ export async function nextDocNo(
   return row!.seq;
 }
 
-/** Current two-digit year (UTC). */
-export function yy(): number {
-  return new Date().getUTCFullYear() % 100;
+/** Current four-digit year (UTC). */
+export function fullYear(): number {
+  return new Date().getUTCFullYear();
+}
+
+/**
+ * Canonical brand prefix — configurable later via org_config, hard-coded for now.
+ * Changing this here updates every document type in one place.
+ */
+const BRAND = 'LQR';
+
+function fmt(type: string, year: number, n: number): string {
+  return `${BRAND}-${type}-${year}-${String(n).padStart(6, '0')}`;
 }
 
 export async function orderNo(tx: Sql, orgId: string): Promise<string> {
-  const y = yy();
-  const n = await nextDocNo(tx, orgId, 'order', y);
-  return `SO-${String(y).padStart(2, '0')}-${String(n).padStart(5, '0')}`;
+  const y = fullYear();
+  return fmt('SO', y, await nextDocNo(tx, orgId, 'order', y));
 }
 
 export async function invoiceNo(tx: Sql, orgId: string): Promise<string> {
-  const y = yy();
-  const n = await nextDocNo(tx, orgId, 'invoice', y);
-  return `INV-${String(y).padStart(2, '0')}-${String(n).padStart(5, '0')}`;
+  const y = fullYear();
+  return fmt('INV', y, await nextDocNo(tx, orgId, 'invoice', y));
 }
 
 export async function receiptNo(tx: Sql, orgId: string): Promise<string> {
-  const y = yy();
-  const n = await nextDocNo(tx, orgId, 'receipt', y);
-  return `RC-${String(y).padStart(2, '0')}-${String(n).padStart(5, '0')}`;
+  const y = fullYear();
+  return fmt('RC', y, await nextDocNo(tx, orgId, 'receipt', y));
 }
 
 export async function creditNoteNo(tx: Sql, orgId: string): Promise<string> {
-  const y = yy();
-  const n = await nextDocNo(tx, orgId, 'credit_note', y);
-  return `CN-${String(y).padStart(2, '0')}-${String(n).padStart(5, '0')}`;
+  const y = fullYear();
+  return fmt('CN', y, await nextDocNo(tx, orgId, 'credit_note', y));
 }
 
-/** Customer codes are lifetime-sequential: C-00001 */
+/** Customer codes are lifetime-sequential, year-less: LQR-C-000001 */
 export async function customerCode(tx: Sql, orgId: string): Promise<string> {
   const n = await nextDocNo(tx, orgId, 'customer', 0);
-  return `C-${String(n).padStart(5, '0')}`;
+  return `${BRAND}-C-${String(n).padStart(6, '0')}`;
 }
