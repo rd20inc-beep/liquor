@@ -143,7 +143,7 @@ export function Badge({
     slate: 'bg-slate-100 text-slate-700 ring-slate-200',
     green: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
     // "amber" tone = warning, uses orange so it doesn't collide with the primary amber
-    amber: 'bg-orange-50 text-orange-700 ring-orange-200',
+    amber: 'bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-200',
     red: 'bg-red-50 text-red-700 ring-red-200',
     // "blue" tone = primary, renders with brand amber (gold)
     blue: 'bg-amber-50 text-amber-800 ring-amber-200',
@@ -171,7 +171,7 @@ export function Tile({
   const accent = {
     green: 'border-l-emerald-600',
     // warning = orange (primary is amber — don't collide)
-    amber: 'border-l-orange-500',
+    amber: 'border-l-fuchsia-500',
     red: 'border-l-red-500',
     // primary = amber/gold
     blue: 'border-l-amber-500',
