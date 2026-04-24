@@ -13,12 +13,13 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
 }) {
   const base =
-    'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50';
+    'inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-slate-50 disabled:opacity-50';
   const variants = {
-    primary: 'bg-amber-600 hover:bg-amber-500 text-white focus:ring-amber-400',
-    secondary: 'bg-slate-200 hover:bg-slate-300 text-slate-900 focus:ring-slate-400',
-    ghost: 'bg-transparent hover:bg-slate-100 text-slate-700',
-    danger: 'bg-red-600 hover:bg-red-500 text-white focus:ring-red-400',
+    primary: 'bg-amber-600 hover:bg-amber-700 text-white focus:ring-amber-500',
+    secondary:
+      'bg-white hover:bg-slate-50 text-slate-800 ring-1 ring-inset ring-slate-300 focus:ring-slate-400',
+    ghost: 'bg-transparent shadow-none hover:bg-slate-100 text-slate-700 focus:ring-slate-300',
+    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
   };
   return <button className={`${base} ${variants[variant]} ${className}`} {...props} />;
 }
@@ -29,7 +30,7 @@ export function Input({
 }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 ${className}`}
+      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${className}`}
       {...props}
     />
   );
@@ -42,7 +43,7 @@ export function Select({
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={`w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 ${className}`}
+      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${className}`}
       {...props}
     >
       {children}
@@ -88,14 +89,16 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg border border-slate-200 bg-white ${className}`}>
+    <div
+      className={`rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-black/[0.02] ${className}`}
+    >
       {title && (
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2">
-          <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+          <h3 className="text-sm font-semibold tracking-tight text-slate-900">{title}</h3>
           {actions}
         </div>
       )}
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </div>
   );
 }
@@ -137,16 +140,18 @@ export function Badge({
   tone?: 'slate' | 'green' | 'amber' | 'red' | 'blue';
 }) {
   const tones = {
-    slate: 'bg-slate-200 text-slate-700',
-    green: 'bg-emerald-100 text-emerald-700',
+    slate: 'bg-slate-100 text-slate-700 ring-slate-200',
+    green: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
     // "amber" tone = warning, uses orange so it doesn't collide with the primary amber
-    amber: 'bg-orange-100 text-orange-700',
-    red: 'bg-red-100 text-red-700',
+    amber: 'bg-orange-50 text-orange-700 ring-orange-200',
+    red: 'bg-red-50 text-red-700 ring-red-200',
     // "blue" tone = primary, renders with brand amber (gold)
-    blue: 'bg-amber-100 text-amber-700',
+    blue: 'bg-amber-50 text-amber-800 ring-amber-200',
   };
   return (
-    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${tones[tone]}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ring-1 ring-inset ${tones[tone]}`}
+    >
       {children}
     </span>
   );
@@ -173,13 +178,17 @@ export function Tile({
   };
   return (
     <div
-      className={`rounded-lg border border-slate-200 bg-white p-4 border-l-4 ${
+      className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-black/[0.02] border-l-4 ${
         tone ? accent[tone] : 'border-l-slate-300'
       }`}
     >
-      <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-slate-900">{value}</div>
-      {sub && <div className="mt-1 text-xs text-slate-600">{sub}</div>}
+      <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+        {label}
+      </div>
+      <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 tabular">
+        {value}
+      </div>
+      {sub && <div className="mt-1.5 text-xs text-slate-500">{sub}</div>}
     </div>
   );
 }
