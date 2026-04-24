@@ -1,0 +1,958 @@
+openapi: 3.0.3
+info:
+  title: Liquor Distribution OS API
+  version: 1.0.0
+  description: |
+    REST API for the Liquor Distribution Operating System.
+    Covers customers, orders, invoices, collections, deliveries, inventory, and sync.
+    All mutating endpoints require an `Idempotency-Key` header.
+servers:
+  - url: https://api.example.com/v1
+    description: Production
+  - url: https://staging.api.example.com/v1
+    description: Staging
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Customers
+  - name: Catalog
+  - name: Inventory
+  - name: Orders
+  - name: Invoices
+  - name: Collections
+  - name: Deliveries
+  - name: Dashboards
+  - name: Sync
+  - name: Admin
+
+paths:
+
+  # ───────────────────────────── AUTH
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Login with phone + OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, otp, device_id]
+              properties:
+                phone: { type: string, example: "+919800000000" }
+                otp: { type: string, example: "482193" }
+                device_id: { type: string }
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token: { type: string }
+                  refresh_token: { type: string }
+                  user: { $ref: '#/components/schemas/User' }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Refresh access token
+      responses:
+        '200': { description: ok }
+
+  # ───────────────────────────── CUSTOMERS
+  /customers:
+    get:
+      tags: [Customers]
+      summary: List customers (route/risk/search filters)
+      parameters:
+        - { in: query, name: route_id, schema: { type: string } }
+        - { in: query, name: risk, schema: { type: string, enum: [low, medium, high] } }
+        - { in: query, name: status, schema: { type: string, enum: [active, hold, blocked, dispute] } }
+        - { in: query, name: q, schema: { type: string }, description: name/code search }
+        - { in: query, name: limit, schema: { type: integer, default: 50 } }
+        - { in: query, name: cursor, schema: { type: string } }
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Customer' }
+                  next_cursor: { type: string, nullable: true }
+    post:
+      tags: [Customers]
+      summary: Create customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomerInput' }
+      responses:
+        '201': { description: created }
+
+  /customers/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    get:
+      tags: [Customers]
+      summary: Get customer
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Customer' }
+    patch:
+      tags: [Customers]
+      summary: Update customer (non-credit fields)
+      responses: { '200': { description: ok } }
+
+  /customers/{id}/360:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    get:
+      tags: [Customers]
+      summary: Full 360 view — profile, AR, history, suggestions
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Customer360' }
+
+  /customers/{id}/credit:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    patch:
+      tags: [Customers]
+      summary: Update credit limit / payment term (admin+)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credit_limit: { type: number }
+                payment_term_id: { type: string }
+                reason: { type: string }
+      responses: { '200': { description: ok } }
+
+  /customers/{id}/hold:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Customers]
+      summary: Place customer on hold
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+                until: { type: string, format: date, nullable: true }
+      responses: { '200': { description: ok } }
+
+  # ───────────────────────────── CATALOG
+  /products:
+    get:
+      tags: [Catalog]
+      parameters:
+        - { in: query, name: q, schema: { type: string } }
+        - { in: query, name: category, schema: { type: string } }
+        - { in: query, name: active, schema: { type: boolean, default: true } }
+      responses: { '200': { description: ok } }
+
+  /products/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    get:
+      tags: [Catalog]
+      responses: { '200': { description: ok } }
+
+  /price-lists:
+    get: { tags: [Catalog], responses: { '200': { description: ok } } }
+    post: { tags: [Catalog], responses: { '201': { description: created } } }
+
+  # ───────────────────────────── INVENTORY
+  /stock:
+    get:
+      tags: [Inventory]
+      summary: Stock by warehouse/product/state
+      parameters:
+        - { in: query, name: warehouse_id, schema: { type: string } }
+        - { in: query, name: product_id, schema: { type: string } }
+        - { in: query, name: state, schema: { type: string, enum: [physical, sellable, free] } }
+      responses: { '200': { description: ok } }
+
+  /stock/transfer:
+    post:
+      tags: [Inventory]
+      summary: Transfer stock between warehouses (incl. van)
+      parameters:
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StockTransferInput' }
+      responses: { '201': { description: created } }
+
+  /stock/adjust:
+    post:
+      tags: [Inventory]
+      summary: Adjust stock (requires approval unless admin)
+      parameters:
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [warehouse_id, product_id, batch_id, delta, reason]
+              properties:
+                warehouse_id: { type: string }
+                product_id: { type: string }
+                batch_id: { type: string }
+                delta: { type: integer, description: "signed" }
+                reason: { type: string, enum: [breakage, audit_variance, theft, expired, other] }
+                note: { type: string }
+      responses: { '202': { description: pending_approval } }
+
+  /stock/cycle-counts:
+    post:
+      tags: [Inventory]
+      summary: Start a cycle count
+      responses: { '201': { description: created } }
+
+  # ───────────────────────────── ORDERS
+  /orders:
+    get:
+      tags: [Orders]
+      parameters:
+        - { in: query, name: customer_id, schema: { type: string } }
+        - { in: query, name: status, schema: { type: string } }
+        - { in: query, name: from, schema: { type: string, format: date } }
+        - { in: query, name: to, schema: { type: string, format: date } }
+      responses: { '200': { description: ok } }
+    post:
+      tags: [Orders]
+      summary: Create order (runs credit check inline)
+      parameters:
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderInput' }
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderCreateResult' }
+
+  /orders/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    get:
+      tags: [Orders]
+      responses: { '200': { description: ok } }
+
+  /orders/{id}/credit-check:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    get:
+      tags: [Orders]
+      summary: Fetch the computed credit decision
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreditDecision' }
+
+  /orders/{id}/approve:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Orders]
+      summary: Approve a held order
+      responses: { '200': { description: ok } }
+
+  /orders/{id}/override-credit:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Orders]
+      summary: Admin override of credit block
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason_code, note]
+              properties:
+                reason_code: { type: string, enum: [festival_load, trusted_customer, one_time_exception, other] }
+                note: { type: string }
+      responses: { '200': { description: ok } }
+
+  /orders/{id}/cancel:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Orders]
+      responses: { '200': { description: ok } }
+
+  # ───────────────────────────── INVOICES
+  /invoices:
+    get:
+      tags: [Invoices]
+      parameters:
+        - { in: query, name: customer_id, schema: { type: string } }
+        - { in: query, name: status, schema: { type: string, enum: [open, partial, paid, disputed] } }
+        - { in: query, name: overdue_min_days, schema: { type: integer } }
+      responses: { '200': { description: ok } }
+
+  /invoices/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    get:
+      tags: [Invoices]
+      responses: { '200': { description: ok } }
+
+  /invoices/{id}/credit-note:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Invoices]
+      summary: Issue credit note (requires approval)
+      responses: { '202': { description: pending_approval } }
+
+  # ───────────────────────────── COLLECTIONS
+  /collections/priority:
+    get:
+      tags: [Collections]
+      summary: Today's priority list for a collector
+      parameters:
+        - { in: query, name: collector_id, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PriorityItem' }
+
+  /visits:
+    post:
+      tags: [Collections]
+      summary: Start a visit (GPS check-in)
+      parameters:
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisitStartInput' }
+      responses: { '201': { description: created } }
+
+  /visits/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    patch:
+      tags: [Collections]
+      summary: Close visit with outcome
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [outcome]
+              properties:
+                outcome: { type: string, enum: [collected, partial, promise, dispute, not_available, refused] }
+                note: { type: string }
+                voice_memo_url: { type: string, format: uri }
+      responses: { '200': { description: ok } }
+
+  /visits/{id}/payment:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Collections]
+      summary: Record payment with allocations
+      parameters:
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentInput' }
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Payment' }
+
+  /visits/{id}/promise:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Collections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, promised_date]
+              properties:
+                amount: { type: number }
+                promised_date: { type: string, format: date }
+                note: { type: string }
+      responses: { '201': { description: created } }
+
+  /visits/{id}/dispute:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Collections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, invoice_ids]
+              properties:
+                reason: { type: string }
+                invoice_ids: { type: array, items: { type: string } }
+                photo_url: { type: string, format: uri }
+      responses: { '201': { description: created } }
+
+  /payments/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    get:
+      tags: [Collections]
+      responses: { '200': { description: ok } }
+    patch:
+      tags: [Collections]
+      summary: Edit payment (admin only; creates audit entry)
+      responses: { '200': { description: ok } }
+
+  /payments/{id}/verify:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Collections]
+      summary: Accounts verifies (cheque cleared / bank credited)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [result]
+              properties:
+                result: { type: string, enum: [verified, bounced] }
+                note: { type: string }
+      responses: { '200': { description: ok } }
+
+  /collectors/{id}/eod:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Collections]
+      summary: End-of-day cash reconciliation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cash_deposited]
+              properties:
+                cash_deposited: { type: number }
+                deposit_slip_url: { type: string, format: uri }
+      responses: { '200': { description: ok } }
+
+  # ───────────────────────────── DELIVERIES
+  /trips:
+    get:
+      tags: [Deliveries]
+      parameters:
+        - { in: query, name: driver_id, schema: { type: string } }
+        - { in: query, name: date, schema: { type: string, format: date } }
+      responses: { '200': { description: ok } }
+    post:
+      tags: [Deliveries]
+      summary: Plan a trip (stops + van load)
+      responses: { '201': { description: created } }
+
+  /trips/{id}/load:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Deliveries]
+      summary: Load van (stock transfer warehouse → van)
+      responses: { '200': { description: ok } }
+
+  /trips/{id}/close:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Deliveries]
+      summary: Close trip with van reconciliation
+      responses: { '200': { description: ok } }
+
+  /deliveries/{id}/confirm:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Deliveries]
+      summary: Confirm delivery with POD & per-line delivered qty
+      parameters:
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeliveryConfirmInput' }
+      responses: { '200': { description: ok } }
+
+  /deliveries/{id}/shortage:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Deliveries]
+      summary: Record shortage / return on delivery
+      responses: { '201': { description: created } }
+
+  # ───────────────────────────── DASHBOARDS
+  /dashboards/owner:
+    get:
+      tags: [Dashboards]
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OwnerDashboard' }
+
+  /dashboards/ar-aging:
+    get:
+      tags: [Dashboards]
+      parameters:
+        - { in: query, name: route_id, schema: { type: string } }
+        - { in: query, name: collector_id, schema: { type: string } }
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ARAging' }
+
+  /dashboards/inventory:
+    get:
+      tags: [Dashboards]
+      parameters:
+        - { in: query, name: warehouse_id, schema: { type: string } }
+      responses: { '200': { description: ok } }
+
+  /dashboards/collectors:
+    get:
+      tags: [Dashboards]
+      summary: Collector performance
+      responses: { '200': { description: ok } }
+
+  # ───────────────────────────── SYNC (mobile offline)
+  /sync/push:
+    post:
+      tags: [Sync]
+      summary: Push offline journal batch
+      parameters:
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_id, events]
+              properties:
+                device_id: { type: string }
+                events:
+                  type: array
+                  items: { $ref: '#/components/schemas/JournalEvent' }
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accepted: { type: array, items: { type: string } }
+                  rejected:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_id: { type: string }
+                        reason: { type: string }
+                        conflict: { type: object }
+
+  /sync/pull:
+    get:
+      tags: [Sync]
+      summary: Pull server-side changes since watermark
+      parameters:
+        - { in: query, name: since, required: true, schema: { type: string, format: date-time } }
+        - { in: query, name: scope, schema: { type: string, enum: [rep, collector, driver] } }
+      responses: { '200': { description: ok } }
+
+  # ───────────────────────────── ADMIN
+  /admin/approvals:
+    get:
+      tags: [Admin]
+      responses: { '200': { description: ok } }
+
+  /admin/approvals/{id}/decide:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string } }
+    post:
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [approve, reject] }
+                note: { type: string }
+      responses: { '200': { description: ok } }
+
+  /admin/audit-log:
+    get:
+      tags: [Admin]
+      parameters:
+        - { in: query, name: entity, schema: { type: string } }
+        - { in: query, name: entity_id, schema: { type: string } }
+        - { in: query, name: user_id, schema: { type: string } }
+        - { in: query, name: from, schema: { type: string, format: date-time } }
+        - { in: query, name: to, schema: { type: string, format: date-time } }
+      responses: { '200': { description: ok } }
+
+  /admin/users:
+    get: { tags: [Admin], responses: { '200': { description: ok } } }
+    post: { tags: [Admin], responses: { '201': { description: created } } }
+
+  /admin/routes:
+    get: { tags: [Admin], responses: { '200': { description: ok } } }
+    post: { tags: [Admin], responses: { '201': { description: created } } }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        phone: { type: string }
+        role: { type: string, enum: [sales, collector, driver, accounts, admin, owner] }
+        active: { type: boolean }
+
+    Customer:
+      type: object
+      properties:
+        id: { type: string }
+        code: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [outlet, bar, hotel, retailer] }
+        route_id: { type: string }
+        geo: { $ref: '#/components/schemas/GeoPoint' }
+        address: { type: string }
+        phone: { type: string }
+        whatsapp: { type: string }
+        assigned_rep_id: { type: string }
+        assigned_collector_id: { type: string }
+        credit_limit: { type: number }
+        payment_term: { type: string, enum: [cash, same_day, net_7, net_14, net_30, pdc, custom] }
+        status: { type: string, enum: [active, hold, blocked, dispute] }
+        credit_state: { $ref: '#/components/schemas/CreditState' }
+
+    CustomerInput:
+      type: object
+      required: [code, name, type, route_id, payment_term]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        type: { type: string }
+        route_id: { type: string }
+        address: { type: string }
+        phone: { type: string }
+        whatsapp: { type: string }
+        geo: { $ref: '#/components/schemas/GeoPoint' }
+        credit_limit: { type: number }
+        payment_term: { type: string }
+
+    Customer360:
+      type: object
+      properties:
+        customer: { $ref: '#/components/schemas/Customer' }
+        aging: { $ref: '#/components/schemas/AgingBuckets' }
+        recent_orders: { type: array, items: { type: object } }
+        recent_payments: { type: array, items: { type: object } }
+        open_invoices: { type: array, items: { type: object } }
+        suggestions:
+          type: object
+          properties:
+            likely_basket:
+              type: array
+              items:
+                type: object
+                properties:
+                  product_id: { type: string }
+                  qty: { type: integer }
+            due_for_reorder: { type: boolean }
+
+    CreditState:
+      type: object
+      properties:
+        outstanding_total: { type: number }
+        available_credit: { type: number }
+        aging: { $ref: '#/components/schemas/AgingBuckets' }
+        risk_score: { type: number, minimum: 0, maximum: 1 }
+        last_payment_at: { type: string, format: date-time }
+        last_visit_at: { type: string, format: date-time }
+        promise_amount: { type: number }
+        promise_due_date: { type: string, format: date }
+
+    AgingBuckets:
+      type: object
+      properties:
+        b_0_7: { type: number }
+        b_8_15: { type: number }
+        b_16_30: { type: number }
+        b_31_60: { type: number }
+        b_60_plus: { type: number }
+
+    OrderInput:
+      type: object
+      required: [customer_id, lines]
+      properties:
+        customer_id: { type: string }
+        notes: { type: string }
+        lines:
+          type: array
+          items:
+            type: object
+            required: [product_id, qty]
+            properties:
+              product_id: { type: string }
+              qty: { type: integer }
+              unit_price: { type: number, description: "optional; otherwise from price list" }
+              discount_pct: { type: number }
+
+    OrderCreateResult:
+      type: object
+      properties:
+        order_id: { type: string }
+        status: { type: string, enum: [confirmed, held, rejected] }
+        credit: { $ref: '#/components/schemas/CreditDecision' }
+
+    CreditDecision:
+      type: object
+      properties:
+        decision: { type: string, enum: [approve, hold, reject] }
+        available_credit: { type: number }
+        order_total: { type: number }
+        risk_score: { type: number }
+        reasons: { type: array, items: { type: string } }
+
+    StockTransferInput:
+      type: object
+      required: [from_warehouse_id, to_warehouse_id, lines]
+      properties:
+        from_warehouse_id: { type: string }
+        to_warehouse_id: { type: string }
+        lines:
+          type: array
+          items:
+            type: object
+            required: [product_id, batch_id, qty]
+            properties:
+              product_id: { type: string }
+              batch_id: { type: string }
+              qty: { type: integer }
+
+    PriorityItem:
+      type: object
+      properties:
+        customer_id: { type: string }
+        name: { type: string }
+        outstanding: { type: number }
+        oldest_aging_days: { type: integer }
+        reason: { type: string, enum: [promise_due_today, overdue_30plus, high_value, route_order, missed_visit] }
+        promise_amount: { type: number, nullable: true }
+        sequence: { type: integer }
+
+    VisitStartInput:
+      type: object
+      required: [customer_id, gps]
+      properties:
+        customer_id: { type: string }
+        gps: { $ref: '#/components/schemas/GeoPoint' }
+
+    PaymentInput:
+      type: object
+      required: [amount, mode, allocations, gps]
+      properties:
+        amount: { type: number }
+        mode: { type: string, enum: [cash, cheque, bank, upi] }
+        mode_ref: { type: string }
+        cheque_date: { type: string, format: date }
+        proof_image_url: { type: string, format: uri }
+        gps: { $ref: '#/components/schemas/GeoPoint' }
+        allocations:
+          type: array
+          items:
+            type: object
+            required: [invoice_id, amount]
+            properties:
+              invoice_id: { type: string }
+              amount: { type: number }
+
+    Payment:
+      type: object
+      properties:
+        id: { type: string }
+        amount: { type: number }
+        mode: { type: string }
+        mode_ref: { type: string }
+        verification_status: { type: string, enum: [pending, verified, bounced] }
+        collected_at: { type: string, format: date-time }
+        locked_at: { type: string, format: date-time, nullable: true }
+
+    DeliveryConfirmInput:
+      type: object
+      required: [lines, pod]
+      properties:
+        lines:
+          type: array
+          items:
+            type: object
+            required: [line_id, delivered_qty]
+            properties:
+              line_id: { type: string }
+              delivered_qty: { type: integer }
+              shortage_reason: { type: string, enum: [oos_van, refused, damaged, other] }
+        pod:
+          type: object
+          required: [signature_url, photo_url]
+          properties:
+            signature_url: { type: string, format: uri }
+            photo_url: { type: string, format: uri }
+        gps: { $ref: '#/components/schemas/GeoPoint' }
+
+    OwnerDashboard:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        sales_today: { type: number }
+        collected_today: { type: number }
+        overdue: { $ref: '#/components/schemas/AgingBuckets' }
+        top_risky_customers:
+          type: array
+          items:
+            type: object
+            properties:
+              customer_id: { type: string }
+              name: { type: string }
+              outstanding: { type: number }
+              oldest_days: { type: integer }
+        pending_approvals: { type: integer }
+        stock_alerts: { type: integer }
+        broken_promises_30d: { type: integer }
+        routes:
+          type: array
+          items:
+            type: object
+            properties:
+              route_id: { type: string }
+              name: { type: string }
+              stops_done: { type: integer }
+              stops_total: { type: integer }
+
+    ARAging:
+      type: object
+      properties:
+        buckets: { $ref: '#/components/schemas/AgingBuckets' }
+        top_overdue:
+          type: array
+          items:
+            type: object
+            properties:
+              customer_id: { type: string }
+              name: { type: string }
+              outstanding: { type: number }
+              aging_days: { type: integer }
+              collector: { type: string }
+              promise_status: { type: string, nullable: true }
+
+    JournalEvent:
+      type: object
+      required: [event_id, type, occurred_at, payload]
+      properties:
+        event_id: { type: string, description: "client-generated UUID; idempotency key" }
+        type:
+          type: string
+          enum: [order.create, visit.start, visit.close, payment.record, promise.create, dispute.create, delivery.confirm, stock.transfer]
+        occurred_at: { type: string, format: date-time }
+        gps: { $ref: '#/components/schemas/GeoPoint' }
+        payload: { type: object, description: "shape depends on type" }
+
+    GeoPoint:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat: { type: number }
+        lng: { type: number }
+        accuracy_m: { type: number }
+
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object }

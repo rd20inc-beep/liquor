@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-typecheck:
+    name: lint + typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+
+  test:
+    name: tests (api)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:15-3.4
+        env:
+          POSTGRES_USER: liquor
+          POSTGRES_PASSWORD: liquor
+          POSTGRES_DB: liquor_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U liquor"
+          --health-interval=3s
+          --health-timeout=3s
+          --health-retries=20
+    env:
+      TEST_DATABASE_URL: postgres://liquor:liquor@localhost:5432/liquor_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Enable extensions
+        env:
+          PGPASSWORD: liquor
+        run: |
+          psql -h localhost -U liquor -d liquor_test -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto; CREATE EXTENSION IF NOT EXISTS citext; CREATE EXTENSION IF NOT EXISTS pg_trgm;'
+
+      - name: Apply migrations (dry-run check + deploy)
+        env:
+          PGPASSWORD: liquor
+        run: |
+          psql -h localhost -U liquor -d liquor_test -v ON_ERROR_STOP=1 -f schema.sql
+
+      - name: Run tests
+        run: pnpm --filter @liquor/api test

@@ -1,0 +1,10 @@
+{
+  "name": "@liquor/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'mobile: scaffold in Phase 2'",
+    "build": "echo 'mobile: scaffold in Phase 2'",
+    "typecheck": "echo 'mobile: scaffold in Phase 2'"
+  }
+}

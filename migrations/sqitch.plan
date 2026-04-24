@@ -1,0 +1,5 @@
+%syntax-version=1.0.0
+%project=liquor-os
+%uri=https://github.com/internal/liquor-os
+
+initial_schema 2026-04-14T00:00:00Z Liquor OS <dev@liquor.local> # Foundation schema from PRD
