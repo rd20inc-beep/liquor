@@ -53,6 +53,13 @@ EOF
   fi
 REMOTE
 
+echo "→ building admin-web locally"
+( cd "$REPO_DIR/admin-web" && pnpm exec vite build > /tmp/liquor-web-build.log 2>&1 ) \
+  || { echo "  admin-web build FAILED — see /tmp/liquor-web-build.log"; exit 1; }
+
+echo "→ syncing admin-web/dist → $TARGET:$REMOTE_DIR/admin-web/dist"
+rsync -az --delete "$REPO_DIR/admin-web/dist/" "$TARGET:$REMOTE_DIR/admin-web/dist/"
+
 echo "→ building + starting compose stack (this builds api on first run)"
 ssh "$TARGET" "cd $REMOTE_DIR && docker compose -f compose.prod.yml --env-file .env up -d --build"
 
