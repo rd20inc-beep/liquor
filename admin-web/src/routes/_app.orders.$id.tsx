@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Badge, Button, Card, ErrorNote, Field, Input, Money, Select, Spinner, Tile } from '../components/ui';
 import { api, ApiError } from '../lib/api';
@@ -50,6 +50,24 @@ interface Warehouse {
 interface Invoice {
   id: string;
   invoice_no: string;
+  order_id: string | null;
+  total: string;
+  outstanding: string;
+  status: string;
+  due_date: string;
+  days_overdue: number;
+}
+
+interface AuditEntry {
+  id: number;
+  ts: string;
+  action: string;
+  entity: string;
+  entity_id: string;
+  user_id: string | null;
+  user_name: string | null;
+  before_json: Record<string, unknown> | null;
+  after_json: Record<string, unknown> | null;
 }
 
 const statusTone: Record<string, 'slate' | 'green' | 'amber' | 'red' | 'blue'> = {
@@ -62,11 +80,46 @@ const statusTone: Record<string, 'slate' | 'green' | 'amber' | 'red' | 'blue'> =
   cancelled: 'red',
 };
 
+function summarizeEvent(evt: AuditEntry): string {
+  const after = evt.after_json ?? {};
+  switch (evt.action) {
+    case 'create': {
+      const total = (after as { total?: string | number }).total;
+      const decision = (after as { decision?: string }).decision;
+      const reasons = (after as { reasons?: string[] }).reasons;
+      const parts: string[] = [`Order created`];
+      if (total) parts.push(`total Rs ${Number(total).toLocaleString('en-US')}`);
+      if (decision) parts.push(`credit ${decision}`);
+      if (reasons?.length) parts.push(`(${reasons.join(', ')})`);
+      return parts.join(' · ');
+    }
+    case 'override': {
+      const code = (after as { reason_code?: string }).reason_code;
+      const note = (after as { note?: string }).note;
+      return `Admin override applied${code ? ` · ${code}` : ''}${note ? ` — ${note}` : ''}`;
+    }
+    case 'update': {
+      const before = evt.before_json ?? {};
+      const prev = (before as { status?: string }).status;
+      const next = (after as { status?: string }).status;
+      const reason = (after as { reason?: string }).reason;
+      if (prev && next && prev !== next) {
+        return `Status ${prev} → ${next}${reason ? ` · ${reason}` : ''}`;
+      }
+      return `Updated${reason ? ` · ${reason}` : ''}`;
+    }
+    case 'approve':
+      return 'Approved';
+    case 'reject':
+      return 'Rejected';
+    default:
+      return evt.action;
+  }
+}
+
 function OrderDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
-  const navigate = useNavigate();
-
   const [showOverride, setShowOverride] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
@@ -86,7 +139,7 @@ function OrderDetail() {
     queryKey: ['masters', 'warehouses'],
     queryFn: () => api.get<{ items: Warehouse[] }>('/warehouses'),
   });
-  // Find the invoice tied to this order (if any)
+  // Find the invoice tied to this order (if any) — filter client-side by order_id
   const invoiceQ = useQuery({
     queryKey: ['invoices', 'for-order', id],
     queryFn: () =>
@@ -94,6 +147,16 @@ function OrderDetail() {
         `/invoices?customer_id=${orderQ.data?.customer_id ?? ''}&limit=50`,
       ),
     enabled: !!orderQ.data && orderQ.data.status === 'invoiced',
+  });
+
+  // Timeline (audit_log for this order). Gracefully hide if role lacks audit:read.
+  const timelineQ = useQuery({
+    queryKey: ['audit', 'sales_order', id],
+    queryFn: () =>
+      api.get<{ items: AuditEntry[] }>(
+        `/audit?entity=sales_order&entity_id=${id}&limit=50`,
+      ),
+    retry: false,
   });
 
   const override = useMutation({
@@ -161,7 +224,8 @@ function OrderDetail() {
   const canInvoice = o.status === 'approved' || o.status === 'confirmed';
   const canCancel = !['invoiced', 'fulfilled', 'cancelled'].includes(o.status);
 
-  const tiedInvoice = invoiceQ.data?.items.find(() => true); // first is enough for simple demo
+  // Pick the invoice whose order_id === this order
+  const tiedInvoice = invoiceQ.data?.items.find((i) => i.order_id === id);
 
   return (
     <div className="space-y-4">
@@ -267,17 +331,117 @@ function OrderDetail() {
 
       {tiedInvoice && (
         <Card title="Invoice">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-sm text-slate-200">
-              {tiedInvoice.invoice_no}
-            </span>
-            <Button
-              variant="secondary"
-              onClick={() => void navigate({ to: '/invoices' })}
-            >
-              Open invoices
-            </Button>
-          </div>
+          {(() => {
+            const total = Number(tiedInvoice.total);
+            const outstanding = Number(tiedInvoice.outstanding);
+            const paid = Math.max(0, total - outstanding);
+            const pct = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
+            return (
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <a
+                      href={`/invoices/${tiedInvoice.id}`}
+                      className="font-mono text-sm text-blue-400 hover:underline"
+                    >
+                      {tiedInvoice.invoice_no}
+                    </a>
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
+                      <Badge
+                        tone={
+                          tiedInvoice.status === 'paid'
+                            ? 'green'
+                            : tiedInvoice.status === 'disputed'
+                              ? 'red'
+                              : 'amber'
+                        }
+                      >
+                        {tiedInvoice.status}
+                      </Badge>
+                      <span>due {tiedInvoice.due_date?.slice(0, 10)}</span>
+                      {tiedInvoice.days_overdue > 0 && (
+                        <span className="text-red-400">
+                          ({tiedInvoice.days_overdue}d overdue)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <a
+                    href={`/invoices/${tiedInvoice.id}`}
+                    className="rounded-md bg-slate-700 px-3 py-1.5 text-sm text-slate-100 no-underline hover:bg-slate-600"
+                  >
+                    Open →
+                  </a>
+                </div>
+                {/* Payment coverage bar */}
+                <div>
+                  <div className="flex justify-between text-xs text-slate-400">
+                    <span>
+                      Paid <Money value={paid} /> of <Money value={total} />
+                    </span>
+                    <span className={pct === 100 ? 'text-emerald-300' : 'text-amber-300'}>
+                      {pct}%
+                    </span>
+                  </div>
+                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className={`h-full ${pct === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  {outstanding > 0 && (
+                    <div className="mt-1 text-xs text-slate-500">
+                      Outstanding: <Money value={outstanding} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </Card>
+      )}
+
+      {/* Timeline — hidden silently if role lacks audit:read */}
+      {!timelineQ.isError && (timelineQ.isLoading || (timelineQ.data?.items.length ?? 0) > 0) && (
+        <Card title="Timeline">
+          {timelineQ.isLoading ? (
+            <Spinner />
+          ) : (
+            <ol className="relative space-y-3 border-l border-slate-800 pl-5">
+              {timelineQ.data!.items
+                .slice()
+                .reverse()
+                .map((evt) => {
+                  const icon =
+                    evt.action === 'create'
+                      ? { sym: '+', tone: 'bg-blue-600' }
+                      : evt.action === 'override'
+                        ? { sym: '!', tone: 'bg-amber-500' }
+                        : evt.action === 'approve'
+                          ? { sym: '✓', tone: 'bg-emerald-600' }
+                          : evt.action === 'reject'
+                            ? { sym: '✕', tone: 'bg-red-600' }
+                            : { sym: '·', tone: 'bg-slate-600' };
+                  const summary = summarizeEvent(evt);
+                  return (
+                    <li key={evt.id} className="relative">
+                      <span
+                        className={`absolute -left-[27px] flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white ${icon.tone}`}
+                      >
+                        {icon.sym}
+                      </span>
+                      <div className="text-xs text-slate-500">
+                        {new Date(evt.ts).toLocaleString()} ·{' '}
+                        <span className="font-mono uppercase text-slate-400">{evt.action}</span>
+                        {' · '}
+                        {evt.user_name ?? 'system'}
+                      </div>
+                      <div className="mt-0.5 text-sm text-slate-200">{summary}</div>
+                    </li>
+                  );
+                })}
+            </ol>
+          )}
         </Card>
       )}
 
