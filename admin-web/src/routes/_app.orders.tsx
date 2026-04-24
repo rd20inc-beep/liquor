@@ -61,13 +61,12 @@ function Orders() {
               <div className="text-right">&nbsp;</div>
             </div>
             {data?.items.map((o) => (
-              <Link
+              <a
                 key={o.id}
-                to="/orders/$id"
-                params={{ id: o.id }}
-                className="grid grid-cols-[140px_110px_1fr_110px_140px_80px] items-center gap-x-3 border-b border-slate-800/60 py-2 text-slate-200 transition hover:bg-slate-900/70"
+                href={`/orders/${o.id}`}
+                className="grid grid-cols-[140px_110px_1fr_110px_140px_80px] items-center gap-x-3 border-b border-slate-800/60 py-2 text-slate-200 no-underline transition hover:bg-slate-900/70"
               >
-                <div className="font-mono text-xs text-blue-400 underline-offset-2 hover:underline">
+                <div className="font-mono text-xs text-blue-400">
                   {o.order_no}
                 </div>
                 <div className="text-xs text-slate-400">{o.order_date?.slice(0, 10)}</div>
@@ -82,7 +81,7 @@ function Orders() {
                   <Money value={o.total} />
                 </div>
                 <div className="text-right text-blue-400">Open →</div>
-              </Link>
+              </a>
             ))}
           </div>
         )}
