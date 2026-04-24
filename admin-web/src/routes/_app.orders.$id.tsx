@@ -242,11 +242,11 @@ function OrderDetail() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Order</div>
-          <h1 className="text-2xl font-semibold text-slate-100">
+          <h1 className="text-2xl font-semibold text-slate-900">
             {o.order_no}{' '}
             <Badge tone={statusTone[o.status] ?? 'slate'}>{o.status}</Badge>
           </h1>
-          <div className="mt-1 text-sm text-slate-400">
+          <div className="mt-1 text-sm text-slate-600">
             <Link
               to="/customers/$id"
               params={{ id: o.customer_id }}
@@ -287,17 +287,17 @@ function OrderDetail() {
       {o.override_reason_code && (
         <Card title="Override">
           <div className="space-y-1 text-sm">
-            <div className="text-slate-200">
+            <div className="text-slate-800">
               {formatOverrideCode(o.override_reason_code)}
             </div>
-            {o.override_note && <div className="text-slate-400">{o.override_note}</div>}
+            {o.override_note && <div className="text-slate-600">{o.override_note}</div>}
           </div>
         </Card>
       )}
 
       {o.credit_reasons && o.credit_reasons.length > 0 && (
         <Card title="Credit engine reasons">
-          <ul className="space-y-1 text-sm text-slate-200">
+          <ul className="space-y-1 text-sm text-slate-800">
             {o.credit_reasons.map((r) => (
               <li key={r} className="flex items-start gap-2">
                 <span className="mt-0.5 text-amber-400">•</span>
@@ -323,15 +323,15 @@ function OrderDetail() {
           </thead>
           <tbody>
             {o.lines.map((line) => (
-              <tr key={line.id} className="border-t border-slate-800/60">
-                <td className="py-1.5 text-slate-200">{line.product_name}</td>
-                <td className="font-mono text-xs text-slate-400">{line.sku}</td>
+              <tr key={line.id} className="border-t border-slate-200">
+                <td className="py-1.5 text-slate-800">{line.product_name}</td>
+                <td className="font-mono text-xs text-slate-600">{line.sku}</td>
                 <td className="text-right">{line.qty}</td>
                 <td className="text-right">
                   <Money value={line.unit_price} />
                 </td>
-                <td className="text-right text-slate-400">{Number(line.discount_pct)}</td>
-                <td className="text-right text-slate-400">{Number(line.tax_rate)}</td>
+                <td className="text-right text-slate-600">{Number(line.discount_pct)}</td>
+                <td className="text-right text-slate-600">{Number(line.tax_rate)}</td>
                 <td className="text-right">
                   <Money value={line.line_total} />
                 </td>
@@ -358,7 +358,7 @@ function OrderDetail() {
                     >
                       {tiedInvoice.invoice_no}
                     </a>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-600">
                       <Badge
                         tone={
                           tiedInvoice.status === 'paid'
@@ -372,7 +372,7 @@ function OrderDetail() {
                       </Badge>
                       <span>due {tiedInvoice.due_date?.slice(0, 10)}</span>
                       {tiedInvoice.days_overdue > 0 && (
-                        <span className="text-red-400">
+                        <span className="text-red-600">
                           ({tiedInvoice.days_overdue}d overdue)
                         </span>
                       )}
@@ -380,22 +380,22 @@ function OrderDetail() {
                   </div>
                   <a
                     href={`/invoices/${tiedInvoice.id}`}
-                    className="rounded-md bg-slate-700 px-3 py-1.5 text-sm text-slate-100 no-underline hover:bg-slate-600"
+                    className="rounded-md bg-slate-300 px-3 py-1.5 text-sm text-slate-900 no-underline hover:bg-slate-600"
                   >
                     Open →
                   </a>
                 </div>
                 {/* Payment coverage bar */}
                 <div>
-                  <div className="flex justify-between text-xs text-slate-400">
+                  <div className="flex justify-between text-xs text-slate-600">
                     <span>
                       Paid <Money value={paid} /> of <Money value={total} />
                     </span>
-                    <span className={pct === 100 ? 'text-emerald-300' : 'text-amber-300'}>
+                    <span className={pct === 100 ? 'text-emerald-700' : 'text-amber-700'}>
                       {pct}%
                     </span>
                   </div>
-                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-200">
                     <div
                       className={`h-full ${pct === 100 ? 'bg-emerald-500' : 'bg-amber-500'}`}
                       style={{ width: `${pct}%` }}
@@ -419,7 +419,7 @@ function OrderDetail() {
           {timelineQ.isLoading ? (
             <Spinner />
           ) : (
-            <ol className="relative space-y-3 border-l border-slate-800 pl-5">
+            <ol className="relative space-y-3 border-l border-slate-200 pl-5">
               {timelineQ.data!.items
                 .slice()
                 .reverse()
@@ -444,11 +444,11 @@ function OrderDetail() {
                       </span>
                       <div className="text-xs text-slate-500">
                         {new Date(evt.ts).toLocaleString()} ·{' '}
-                        <span className="font-mono uppercase text-slate-400">{evt.action}</span>
+                        <span className="font-mono uppercase text-slate-600">{evt.action}</span>
                         {' · '}
                         {evt.user_name ?? 'system'}
                       </div>
-                      <div className="mt-0.5 text-sm text-slate-200">{summary}</div>
+                      <div className="mt-0.5 text-sm text-slate-800">{summary}</div>
                     </li>
                   );
                 })}
@@ -547,7 +547,7 @@ function OrderDetail() {
 
             {/* Per-line price adjustments */}
             <div>
-              <div className="mb-2 text-xs uppercase tracking-wide text-slate-400">
+              <div className="mb-2 text-xs uppercase tracking-wide text-slate-600">
                 Optional — adjust per-line prices
               </div>
               <p className="mb-2 text-xs text-slate-500">
@@ -570,10 +570,10 @@ function OrderDetail() {
                     {o.lines.map((line) => {
                       const draft = lineDrafts[line.id] ?? { unit_price: '', discount_pct: '' };
                       return (
-                        <tr key={line.id} className="border-t border-slate-800/60">
-                          <td className="py-1.5 text-slate-200">{line.product_name}</td>
-                          <td className="text-right text-slate-300">{line.qty}</td>
-                          <td className="text-right text-slate-400">
+                        <tr key={line.id} className="border-t border-slate-200">
+                          <td className="py-1.5 text-slate-800">{line.product_name}</td>
+                          <td className="text-right text-slate-700">{line.qty}</td>
+                          <td className="text-right text-slate-600">
                             <Money value={line.unit_price} />
                           </td>
                           <td className="text-right">
@@ -595,7 +595,7 @@ function OrderDetail() {
                               }
                             />
                           </td>
-                          <td className="text-right text-slate-400">
+                          <td className="text-right text-slate-600">
                             {Number(line.discount_pct)}
                           </td>
                           <td className="text-right">

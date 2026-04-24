@@ -114,7 +114,7 @@ function InvoiceDetail() {
 
   if (invoiceQ.isLoading) return <Spinner label="Loading invoice" />;
   if (invoiceQ.isError || !invoiceQ.data)
-    return <div className="text-sm text-red-400">Invoice not found.</div>;
+    return <div className="text-sm text-red-600">Invoice not found.</div>;
 
   const inv = invoiceQ.data;
   const daysOverdue = Math.max(
@@ -130,12 +130,12 @@ function InvoiceDetail() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Invoice</div>
-          <h1 className="text-2xl font-semibold text-slate-100">
+          <h1 className="text-2xl font-semibold text-slate-900">
             {inv.invoice_no}{' '}
             <Badge tone={statusTone[inv.status] ?? 'slate'}>{inv.status}</Badge>{' '}
             {inv.locked_at && <Badge tone="green">locked</Badge>}
           </h1>
-          <div className="mt-1 text-sm text-slate-400">
+          <div className="mt-1 text-sm text-slate-600">
             <Link
               to="/customers/$id"
               params={{ id: inv.customer_id }}
@@ -149,7 +149,7 @@ function InvoiceDetail() {
             {' · due '}
             {asDate(inv.due_date)}
             {daysOverdue > 0 && (
-              <span className="ml-1 text-red-400">({daysOverdue}d overdue)</span>
+              <span className="ml-1 text-red-600">({daysOverdue}d overdue)</span>
             )}
           </div>
         </div>
@@ -160,7 +160,7 @@ function InvoiceDetail() {
 
       {error && <ErrorNote message={error} />}
       {flash && (
-        <div className="rounded-md border border-green-900/60 bg-green-950/40 p-3 text-sm text-green-300">
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
           {flash}
         </div>
       )}
@@ -205,18 +205,18 @@ function InvoiceDetail() {
             </thead>
             <tbody>
               {inv.lines.map((l) => (
-                <tr key={l.id} className="border-t border-slate-800/60">
-                  <td className="py-1.5 text-slate-200">{l.product_name}</td>
-                  <td className="font-mono text-xs text-slate-400">{l.sku}</td>
-                  <td className="font-mono text-xs text-slate-400">
+                <tr key={l.id} className="border-t border-slate-200">
+                  <td className="py-1.5 text-slate-800">{l.product_name}</td>
+                  <td className="font-mono text-xs text-slate-600">{l.sku}</td>
+                  <td className="font-mono text-xs text-slate-600">
                     {l.batch_no ?? '—'}
                   </td>
-                  <td className="text-xs text-slate-400">{asDate(l.expiry_date)}</td>
+                  <td className="text-xs text-slate-600">{asDate(l.expiry_date)}</td>
                   <td className="text-right">{l.qty}</td>
                   <td className="text-right">
                     <Money value={l.unit_price} />
                   </td>
-                  <td className="text-right text-slate-400">{Number(l.tax_rate)}</td>
+                  <td className="text-right text-slate-600">{Number(l.tax_rate)}</td>
                   <td className="text-right">
                     <Money value={l.line_total} />
                   </td>
@@ -252,7 +252,7 @@ function InvoiceDetail() {
             </thead>
             <tbody>
               {inv.allocations.map((a) => (
-                <tr key={a.payment_id} className="border-t border-slate-800/60">
+                <tr key={a.payment_id} className="border-t border-slate-200">
                   <td className="py-1.5 font-mono text-xs">
                     <Link
                       to="/payments/$id"
@@ -278,7 +278,7 @@ function InvoiceDetail() {
                       {a.verification_status}
                     </Badge>
                   </td>
-                  <td className="text-xs text-slate-400">
+                  <td className="text-xs text-slate-600">
                     {new Date(a.collected_at).toLocaleString()}
                   </td>
                   <td className="text-right">
@@ -304,10 +304,10 @@ function InvoiceDetail() {
             </thead>
             <tbody>
               {inv.credit_notes.map((cn) => (
-                <tr key={cn.id} className="border-t border-slate-800/60">
-                  <td className="py-1.5 font-mono text-xs text-slate-200">{cn.cn_no}</td>
-                  <td className="text-slate-300">{cn.reason}</td>
-                  <td className="text-xs text-slate-400">
+                <tr key={cn.id} className="border-t border-slate-200">
+                  <td className="py-1.5 font-mono text-xs text-slate-800">{cn.cn_no}</td>
+                  <td className="text-slate-700">{cn.reason}</td>
+                  <td className="text-xs text-slate-600">
                     {new Date(cn.issued_at).toLocaleString()}
                   </td>
                   <td className="text-right">

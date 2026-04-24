@@ -37,7 +37,7 @@ function ProductsList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">Products</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Products</h1>
         <Link to="/products/new">
           <Button>+ New product</Button>
         </Link>
@@ -77,19 +77,19 @@ function ProductsList() {
               </thead>
               <tbody>
                 {data?.items.map((p) => (
-                  <tr key={p.id} className="border-t border-slate-800/60">
-                    <td className="py-1.5 font-mono text-xs text-slate-400">{p.sku}</td>
-                    <td className="text-slate-200">{p.name}</td>
-                    <td className="text-slate-400">{p.brand_name}</td>
-                    <td className="text-slate-400">{p.category}</td>
-                    <td className="text-right text-slate-400">
+                  <tr key={p.id} className="border-t border-slate-200">
+                    <td className="py-1.5 font-mono text-xs text-slate-600">{p.sku}</td>
+                    <td className="text-slate-800">{p.name}</td>
+                    <td className="text-slate-600">{p.brand_name}</td>
+                    <td className="text-slate-600">{p.category}</td>
+                    <td className="text-right text-slate-600">
                       {p.bottle_size_ml}ml · {p.case_qty}/case
                     </td>
-                    <td className="text-right text-slate-400">{Number(p.tax_rate).toFixed(1)}</td>
+                    <td className="text-right text-slate-600">{Number(p.tax_rate).toFixed(1)}</td>
                     <td className="text-right">
                       <Money value={p.mrp} />
                     </td>
-                    <td className="text-right text-slate-400">{p.reorder_point ?? '—'}</td>
+                    <td className="text-right text-slate-600">{p.reorder_point ?? '—'}</td>
                     <td>
                       <Badge tone={p.active ? 'green' : 'slate'}>
                         {p.active ? 'active' : 'inactive'}

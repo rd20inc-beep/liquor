@@ -96,7 +96,7 @@ function InventoryDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">Inventory</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Inventory</h1>
         <Link to="/inventory/receipt">
           <Button>+ New receipt</Button>
         </Link>
@@ -157,17 +157,17 @@ function InventoryDashboard() {
                 {lowStock.slice(0, 8).map((r) => (
                   <tr
                     key={`${r.warehouse_id}-${r.product_id}`}
-                    className="border-t border-slate-800/60"
+                    className="border-t border-slate-200"
                   >
-                    <td className="py-1.5 text-xs text-slate-400">{r.warehouse_code}</td>
+                    <td className="py-1.5 text-xs text-slate-600">{r.warehouse_code}</td>
                     <td>
-                      <span className="text-slate-200">{r.product_name}</span>
+                      <span className="text-slate-800">{r.product_name}</span>
                       <span className="ml-1 text-xs text-slate-500">{r.sku}</span>
                     </td>
                     <td className="text-right">
-                      <span className="text-amber-300">{r.sellable}</span>
+                      <span className="text-amber-700">{r.sellable}</span>
                     </td>
-                    <td className="text-right text-slate-400">{r.reorder_point}</td>
+                    <td className="text-right text-slate-600">{r.reorder_point}</td>
                   </tr>
                 ))}
                 {lowStock.length > 8 && (
@@ -207,18 +207,18 @@ function InventoryDashboard() {
               <tbody>
                 {nearExpiry.slice(0, 8).map((r) => {
                   const d = daysUntil(r.nearest_expiry)!;
-                  const tone = d < 0 ? 'text-red-500' : d <= 7 ? 'text-red-400' : 'text-amber-300';
+                  const tone = d < 0 ? 'text-red-700' : d <= 7 ? 'text-red-600' : 'text-amber-700';
                   return (
                     <tr
                       key={`${r.warehouse_id}-${r.product_id}`}
-                      className="border-t border-slate-800/60"
+                      className="border-t border-slate-200"
                     >
-                      <td className="py-1.5 text-xs text-slate-400">{r.warehouse_code}</td>
+                      <td className="py-1.5 text-xs text-slate-600">{r.warehouse_code}</td>
                       <td>
-                        <span className="text-slate-200">{r.product_name}</span>
+                        <span className="text-slate-800">{r.product_name}</span>
                         <span className="ml-1 text-xs text-slate-500">{r.sku}</span>
                       </td>
-                      <td className="text-right text-slate-300">{r.sellable}</td>
+                      <td className="text-right text-slate-700">{r.sellable}</td>
                       <td className={`text-right ${tone}`}>
                         {d < 0 ? `${-d}d past` : `${d}d`}
                         <span className="ml-1 text-xs text-slate-500">
@@ -242,7 +242,7 @@ function InventoryDashboard() {
             <select
               value={whFilter}
               onChange={(e) => setWhFilter(e.target.value)}
-              className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900"
             >
               <option value="">All warehouses</option>
               {warehouses.map((w) => (
@@ -297,29 +297,29 @@ function InventoryDashboard() {
                   return (
                     <tr
                       key={`${r.warehouse_id}-${r.product_id}`}
-                      className="border-t border-slate-800/60 hover:bg-slate-900/50"
+                      className="border-t border-slate-200 hover:bg-slate-100/70"
                     >
                       <td className="py-1.5">
-                        <div className="text-slate-300">{r.warehouse_code}</div>
+                        <div className="text-slate-700">{r.warehouse_code}</div>
                         {r.warehouse_type === 'van' && (
                           <div className="text-xs text-slate-500">van</div>
                         )}
                       </td>
-                      <td className="text-slate-200">{r.product_name}</td>
-                      <td className="font-mono text-xs text-slate-400">{r.sku}</td>
+                      <td className="text-slate-800">{r.product_name}</td>
+                      <td className="font-mono text-xs text-slate-600">{r.sku}</td>
                       <td className="text-right">{physical}</td>
                       <td className="text-right">{sellable}</td>
-                      <td className={`text-right ${low ? 'text-amber-300' : ''}`}>{free}</td>
+                      <td className={`text-right ${low ? 'text-amber-700' : ''}`}>{free}</td>
                       <td className="text-right text-slate-500">
                         {reserved > 0 ? reserved : '—'}
                       </td>
                       <td className="text-right text-slate-500">
                         {r.reorder_point ?? '—'}
                       </td>
-                      <td className="text-xs text-slate-400">
+                      <td className="text-xs text-slate-600">
                         {asDateOnly(r.nearest_expiry) ?? '—'}
                         {expDays != null && expDays <= 60 && (
-                          <span className={`ml-1 ${expDays < 0 ? 'text-red-500' : expDays <= 7 ? 'text-red-400' : 'text-amber-300'}`}>
+                          <span className={`ml-1 ${expDays < 0 ? 'text-red-700' : expDays <= 7 ? 'text-red-600' : 'text-amber-700'}`}>
                             ({expDays < 0 ? `${-expDays}d past` : `${expDays}d`})
                           </span>
                         )}

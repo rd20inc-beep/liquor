@@ -81,7 +81,7 @@ function PriceListDetail() {
 
   if (listQ.isLoading) return <Spinner label="Loading price list" />;
   if (listQ.isError || !listQ.data)
-    return <div className="text-sm text-red-400">Price list not found.</div>;
+    return <div className="text-sm text-red-600">Price list not found.</div>;
 
   const pl = listQ.data;
 
@@ -90,10 +90,10 @@ function PriceListDetail() {
       <div className="flex items-start justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Price list</div>
-          <h1 className="text-2xl font-semibold text-slate-100">
+          <h1 className="text-2xl font-semibold text-slate-900">
             {pl.name} {pl.is_default && <Badge tone="blue">default</Badge>}
           </h1>
-          <div className="mt-1 text-sm text-slate-400">
+          <div className="mt-1 text-sm text-slate-600">
             Effective {pl.effective_from?.slice(0, 10)} →{' '}
             {pl.effective_to?.slice(0, 10) ?? 'open'}
           </div>
@@ -105,7 +105,7 @@ function PriceListDetail() {
 
       {error && <ErrorNote message={error} />}
       {flash && (
-        <div className="rounded-md border border-green-900/60 bg-green-950/40 p-3 text-sm text-green-300">
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
           {flash}
         </div>
       )}
@@ -201,10 +201,10 @@ function PriceListDetail() {
             </thead>
             <tbody>
               {pl.items.map((it) => (
-                <tr key={it.product_id} className="border-t border-slate-800/60">
-                  <td className="py-1.5 font-mono text-xs text-slate-400">{it.sku}</td>
-                  <td className="text-slate-200">{it.product_name}</td>
-                  <td className="text-right text-xs text-slate-400">
+                <tr key={it.product_id} className="border-t border-slate-200">
+                  <td className="py-1.5 font-mono text-xs text-slate-600">{it.sku}</td>
+                  <td className="text-slate-800">{it.product_name}</td>
+                  <td className="text-right text-xs text-slate-600">
                     {it.bottle_size_ml}ml · {it.case_qty}
                   </td>
                   <td className="text-right">
@@ -213,12 +213,12 @@ function PriceListDetail() {
                   <td className="text-right">
                     <Money value={it.case_price} />
                   </td>
-                  <td className="text-right text-slate-400">{it.min_qty}</td>
+                  <td className="text-right text-slate-600">{it.min_qty}</td>
                   <td className="text-right">
                     <button
                       type="button"
                       onClick={() => deleteItem.mutate(it.product_id)}
-                      className="text-xs text-red-400 hover:text-red-300"
+                      className="text-xs text-red-600 hover:text-red-700"
                       disabled={deleteItem.isPending}
                     >
                       remove

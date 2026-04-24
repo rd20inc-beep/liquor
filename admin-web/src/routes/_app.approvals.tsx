@@ -47,7 +47,7 @@ function Approvals() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-slate-100">Approvals</h1>
+      <h1 className="text-2xl font-semibold text-slate-900">Approvals</h1>
       {error && <ErrorNote message={error} />}
       <Card>
         {listQ.isLoading ? (
@@ -67,12 +67,12 @@ function Approvals() {
             </thead>
             <tbody>
               {listQ.data?.items.map((a) => (
-                <tr key={a.id} className="border-t border-slate-800/60">
+                <tr key={a.id} className="border-t border-slate-200">
                   <td className="py-2">
                     <Badge tone="blue">{a.type}</Badge>
                   </td>
-                  <td className="text-slate-300">{a.reason ?? '—'}</td>
-                  <td className="text-slate-400">{a.requested_by_name ?? 'unknown'}</td>
+                  <td className="text-slate-700">{a.reason ?? '—'}</td>
+                  <td className="text-slate-600">{a.requested_by_name ?? 'unknown'}</td>
                   <td className="text-xs text-slate-500">
                     {new Date(a.created_at).toLocaleString()}
                   </td>

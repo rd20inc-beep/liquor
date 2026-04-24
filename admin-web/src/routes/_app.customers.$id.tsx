@@ -93,7 +93,7 @@ function CustomerDetail() {
 
   if (isLoading) return <Spinner label="Loading customer" />;
   if (isError || !data)
-    return <div className="text-sm text-red-400">Customer not found.</div>;
+    return <div className="text-sm text-red-600">Customer not found.</div>;
 
   const c = data.customer;
   const currentList = listsQ.data?.items.find((l) => l.id === c.price_list_id);
@@ -103,11 +103,11 @@ function CustomerDetail() {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Customer</div>
-          <h1 className="text-2xl font-semibold text-slate-100">
+          <h1 className="text-2xl font-semibold text-slate-900">
             {c.name}
             <span className="ml-3 text-sm text-slate-500">({c.code})</span>
           </h1>
-          <div className="mt-1 flex items-center gap-3 text-sm text-slate-400">
+          <div className="mt-1 flex items-center gap-3 text-sm text-slate-600">
             <Badge
               tone={
                 c.status === 'active' ? 'green' : c.status === 'hold' ? 'amber' : 'red'
@@ -164,7 +164,7 @@ function CustomerDetail() {
         {!editPriceList ? (
           <div className="flex items-center justify-between text-sm">
             <div>
-              <span className="text-slate-400">Price list: </span>
+              <span className="text-slate-600">Price list: </span>
               {c.price_list_id ? (
                 <Link
                   to="/price-lists/$id"
@@ -174,7 +174,7 @@ function CustomerDetail() {
                   {currentList?.name ?? c.price_list_id.slice(0, 8) + '…'}
                 </Link>
               ) : (
-                <span className="text-slate-200">default (org-wide)</span>
+                <span className="text-slate-800">default (org-wide)</span>
               )}
             </div>
             <Button
@@ -196,7 +196,7 @@ function CustomerDetail() {
             }}
           >
             <div className="min-w-64 flex-1">
-              <span className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+              <span className="mb-1 block text-xs uppercase tracking-wide text-slate-600">
                 Price list
               </span>
               <Select
@@ -239,7 +239,7 @@ function CustomerDetail() {
               </thead>
               <tbody>
                 {data.open_invoices.map((inv) => (
-                  <tr key={inv.id} className="border-t border-slate-800/60">
+                  <tr key={inv.id} className="border-t border-slate-200">
                     <td className="py-1.5 font-mono text-xs">
                       <Link
                         to="/invoices/$id"
@@ -249,7 +249,7 @@ function CustomerDetail() {
                         {inv.invoice_no}
                       </Link>
                     </td>
-                    <td className="text-xs text-slate-400">{inv.due_date?.slice(0, 10)}</td>
+                    <td className="text-xs text-slate-600">{inv.due_date?.slice(0, 10)}</td>
                     <td className="text-right">
                       <Money value={inv.total} />
                     </td>
@@ -281,7 +281,7 @@ function CustomerDetail() {
               </thead>
               <tbody>
                 {data.recent_orders.map((o) => (
-                  <tr key={o.id} className="border-t border-slate-800/60">
+                  <tr key={o.id} className="border-t border-slate-200">
                     <td className="py-1.5 font-mono text-xs">
                       <Link
                         to="/orders/$id"
@@ -291,7 +291,7 @@ function CustomerDetail() {
                         {o.order_no}
                       </Link>
                     </td>
-                    <td className="text-xs text-slate-400">{o.order_date}</td>
+                    <td className="text-xs text-slate-600">{o.order_date}</td>
                     <td>
                       <Badge>{o.status}</Badge>
                     </td>
@@ -320,7 +320,7 @@ function CustomerDetail() {
               </thead>
               <tbody>
                 {data.recent_payments.map((p) => (
-                  <tr key={p.id} className="border-t border-slate-800/60">
+                  <tr key={p.id} className="border-t border-slate-200">
                     <td className="py-1.5 font-mono text-xs">
                       <Link
                         to="/payments/$id"
@@ -363,7 +363,7 @@ function CustomerDetail() {
             <ul className="space-y-1 text-sm">
               {data.suggestions.likely_basket.map((p) => (
                 <li key={p.product_id} className="flex justify-between">
-                  <span className="text-slate-200">{p.name}</span>
+                  <span className="text-slate-800">{p.name}</span>
                   <span className="text-slate-500">
                     avg qty {Number(p.avg_qty).toFixed(0)}
                   </span>
@@ -372,7 +372,7 @@ function CustomerDetail() {
             </ul>
           )}
           {data.suggestions.due_for_reorder && (
-            <div className="mt-3 rounded-md border border-amber-900/50 bg-amber-950/40 p-2 text-xs text-amber-300">
+            <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
               Due for reorder based on past cadence.
             </div>
           )}

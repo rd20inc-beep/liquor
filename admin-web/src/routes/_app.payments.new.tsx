@@ -90,7 +90,7 @@ function NewPayment() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-slate-100">Payment recorded</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Payment recorded</h1>
           <Link to="/payments" className="text-sm text-amber-400 hover:underline">
             ← Payments
           </Link>
@@ -99,23 +99,23 @@ function NewPayment() {
           <div className="space-y-4">
             <div className="flex items-baseline justify-between">
               <div>
-                <div className="font-mono text-sm text-slate-400">{result.receipt_no}</div>
-                <div className="text-xl font-semibold text-slate-100">
+                <div className="font-mono text-sm text-slate-600">{result.receipt_no}</div>
+                <div className="text-xl font-semibold text-slate-900">
                   <Money value={result.amount} />
                 </div>
               </div>
               <Badge tone="green">recorded</Badge>
             </div>
-            <div className="rounded-md border border-slate-800 bg-slate-950/60 p-3 text-sm">
+            <div className="rounded-md border border-slate-200 bg-slate-100/60 p-3 text-sm">
               <div className="mb-2 text-xs uppercase tracking-wide text-slate-500">
                 Allocation (FIFO by due date)
               </div>
               {result.allocations.length === 0 ? (
-                <div className="text-slate-400">
+                <div className="text-slate-600">
                   No allocations — full amount is sitting as advance.
                 </div>
               ) : (
-                <ul className="space-y-1 text-slate-300">
+                <ul className="space-y-1 text-slate-700">
                   {result.allocations.map((a) => (
                     <li key={a.invoice_id} className="flex justify-between font-mono text-xs">
                       <span>{a.invoice_id.slice(0, 8)}…</span>
@@ -129,7 +129,7 @@ function NewPayment() {
                 <Money value={result.allocated} />
               </div>
               {result.advance > 0 && (
-                <div className="mt-1 flex justify-between text-xs text-amber-300">
+                <div className="mt-1 flex justify-between text-xs text-amber-700">
                   <span>Advance (unallocated)</span>
                   <Money value={result.advance} />
                 </div>
@@ -164,7 +164,7 @@ function NewPayment() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">Record payment</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Record payment</h1>
         <Link to="/payments" className="text-sm text-amber-400 hover:underline">
           ← Payments
         </Link>
@@ -247,7 +247,7 @@ function NewPayment() {
           )}
 
           {dupWarning && (
-            <label className="col-span-full flex items-center gap-2 text-sm text-amber-300">
+            <label className="col-span-full flex items-center gap-2 text-sm text-amber-700">
               <input
                 type="checkbox"
                 checked={force}

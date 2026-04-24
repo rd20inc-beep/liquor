@@ -37,7 +37,7 @@ function Invoices() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-slate-100">Invoices</h1>
+      <h1 className="text-2xl font-semibold text-slate-900">Invoices</h1>
       <Card>
         {isLoading ? (
           <Spinner label="Loading invoices" />
@@ -62,14 +62,14 @@ function Invoices() {
                 <tr
                   key={i.id}
                   onClick={() => void navigate({ to: '/invoices/$id', params: { id: i.id } })}
-                  className="cursor-pointer border-t border-slate-800/60 hover:bg-slate-900/60"
+                  className="cursor-pointer border-t border-slate-200 hover:bg-white"
                 >
                   <td className="py-2 font-mono text-xs text-amber-400">{i.invoice_no}</td>
                   <td>
                     {i.customer_name}{' '}
                     <span className="text-xs text-slate-500">({i.customer_code})</span>
                   </td>
-                  <td className="text-xs text-slate-400">{i.due_date?.slice(0, 10)}</td>
+                  <td className="text-xs text-slate-600">{i.due_date?.slice(0, 10)}</td>
                   <td>
                     <Badge tone={statusTone[i.status] ?? 'slate'}>{i.status}</Badge>
                   </td>

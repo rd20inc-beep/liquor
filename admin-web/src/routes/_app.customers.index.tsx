@@ -45,7 +45,7 @@ function CustomersList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">Customers</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Customers</h1>
         <Link to="/customers/new">
           <Button>+ New customer</Button>
         </Link>
@@ -63,7 +63,7 @@ function CustomersList() {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as '' | Customer['status'])}
-            className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100"
+            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900"
           >
             <option value="">All statuses</option>
             <option value="active">Active</option>
@@ -78,7 +78,7 @@ function CustomersList() {
         {isLoading ? (
           <Spinner label="Loading customers" />
         ) : isError ? (
-          <div className="text-sm text-red-400">Failed to load customers.</div>
+          <div className="text-sm text-red-600">Failed to load customers.</div>
         ) : data?.items.length === 0 ? (
           <div className="text-sm text-slate-500">No customers match your filter.</div>
         ) : (
@@ -99,14 +99,14 @@ function CustomersList() {
                 {data?.items.map((c) => (
                   <tr
                     key={c.id}
-                    className="border-t border-slate-800/60 hover:bg-slate-900/50"
+                    className="border-t border-slate-200 hover:bg-slate-100/70"
                   >
-                    <td className="py-2 text-slate-400">{c.code}</td>
+                    <td className="py-2 text-slate-600">{c.code}</td>
                     <td>
                       <Link
                         to="/customers/$id"
                         params={{ id: c.id }}
-                        className="text-slate-200 hover:text-amber-400"
+                        className="text-slate-800 hover:text-amber-400"
                       >
                         {c.name}
                       </Link>
@@ -123,7 +123,7 @@ function CustomersList() {
                     <td className="text-right">
                       <Money value={c.available_credit} />
                     </td>
-                    <td className="text-right text-xs text-slate-400">
+                    <td className="text-right text-xs text-slate-600">
                       {c.risk_score ? Number(c.risk_score).toFixed(2) : '—'}
                     </td>
                   </tr>

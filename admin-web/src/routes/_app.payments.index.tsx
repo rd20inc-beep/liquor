@@ -37,7 +37,7 @@ function PaymentsList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">Payments</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Payments</h1>
         <Link to="/payments/new">
           <Button>+ Record payment</Button>
         </Link>
@@ -71,14 +71,14 @@ function PaymentsList() {
                   <tr
                     key={p.id}
                     onClick={() => void navigate({ to: '/payments/$id', params: { id: p.id } })}
-                    className="cursor-pointer border-t border-slate-800/60 hover:bg-slate-900/60"
+                    className="cursor-pointer border-t border-slate-200 hover:bg-white"
                   >
                     <td className="py-2 font-mono text-xs text-amber-400">{p.receipt_no}</td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <Link
                         to="/customers/$id"
                         params={{ id: p.customer_id }}
-                        className="text-slate-200 hover:text-amber-400"
+                        className="text-slate-800 hover:text-amber-400"
                       >
                         {p.customer_name}
                       </Link>{' '}
@@ -92,7 +92,7 @@ function PaymentsList() {
                         {p.verification_status}
                       </Badge>
                     </td>
-                    <td className="text-xs text-slate-400">
+                    <td className="text-xs text-slate-600">
                       {new Date(p.collected_at).toLocaleString()}
                     </td>
                     <td className="text-right">

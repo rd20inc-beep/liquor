@@ -48,10 +48,10 @@ function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-sm space-y-6 rounded-xl border border-slate-800 bg-slate-900/70 p-8 shadow-xl">
+      <div className="w-full max-w-sm space-y-6 rounded-xl border border-slate-200 bg-slate-100/70 p-8 shadow-xl">
         <div>
-          <h1 className="text-xl font-semibold text-slate-100">Liquor OS</h1>
-          <p className="mt-1 text-sm text-slate-400">Admin — sign in</p>
+          <h1 className="text-xl font-semibold text-slate-900">Liquor OS</h1>
+          <p className="mt-1 text-sm text-slate-600">Admin — sign in</p>
         </div>
 
         {error && <ErrorNote message={error} />}
@@ -64,7 +64,7 @@ function LoginPage() {
           className="space-y-3"
         >
           <label className="block">
-            <span className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+            <span className="mb-1 block text-xs uppercase tracking-wide text-slate-600">
               Login ID
             </span>
             <Input
@@ -77,7 +77,7 @@ function LoginPage() {
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+            <span className="mb-1 block text-xs uppercase tracking-wide text-slate-600">
               6-digit OTP
             </span>
             <Input

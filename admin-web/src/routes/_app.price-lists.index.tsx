@@ -25,7 +25,7 @@ function PriceListsIndex() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">Price lists</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Price lists</h1>
         <Link to="/price-lists/new">
           <Button>+ New price list</Button>
         </Link>
@@ -41,7 +41,7 @@ function PriceListsIndex() {
           </div>
         ) : (
           <div className="w-full text-sm">
-            <div className="grid grid-cols-[1fr_110px_110px_110px_80px] gap-x-3 border-b border-slate-800 pb-2 text-xs uppercase text-slate-500">
+            <div className="grid grid-cols-[1fr_110px_110px_110px_80px] gap-x-3 border-b border-slate-200 pb-2 text-xs uppercase text-slate-500">
               <div>Name</div>
               <div>Effective from</div>
               <div>Effective to</div>
@@ -52,19 +52,19 @@ function PriceListsIndex() {
               <a
                 key={pl.id}
                 href={`/price-lists/${pl.id}`}
-                className="grid grid-cols-[1fr_110px_110px_110px_80px] items-center gap-x-3 border-b border-slate-800/60 py-2 text-slate-200 no-underline transition hover:bg-slate-900/70"
+                className="grid grid-cols-[1fr_110px_110px_110px_80px] items-center gap-x-3 border-b border-slate-200 py-2 text-slate-800 no-underline transition hover:bg-slate-100/70"
               >
                 <div className="flex items-center gap-2">
                   <span>{pl.name}</span>
                   {pl.is_default && <Badge tone="blue">default</Badge>}
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-slate-600">
                   {pl.effective_from?.slice(0, 10)}
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-slate-600">
                   {pl.effective_to ? pl.effective_to.slice(0, 10) : '—'}
                 </div>
-                <div className="text-slate-300">{pl.item_count}</div>
+                <div className="text-slate-700">{pl.item_count}</div>
                 <div className="text-right text-amber-400">Open →</div>
               </a>
             ))}

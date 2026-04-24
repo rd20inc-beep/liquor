@@ -97,7 +97,7 @@ function NewCustomer() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">New customer</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">New customer</h1>
         <Link to="/customers" className="text-sm text-amber-400 hover:underline">
           ← All customers
         </Link>
@@ -215,7 +215,7 @@ function NewCustomer() {
             </Select>
           </Field>
 
-          <label className="col-span-full flex items-center gap-2 text-sm text-slate-300">
+          <label className="col-span-full flex items-center gap-2 text-sm text-slate-700">
             <input
               type="checkbox"
               checked={form.high_value}

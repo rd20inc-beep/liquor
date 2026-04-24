@@ -141,7 +141,7 @@ function NewOrder() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-slate-100">Order submitted</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Order submitted</h1>
           <Link to="/orders" className="text-sm text-amber-400 hover:underline">
             ← Orders
           </Link>
@@ -150,10 +150,10 @@ function NewOrder() {
           <div className="space-y-4">
             <div className="flex items-baseline justify-between">
               <div>
-                <div className="font-mono text-sm text-slate-400">
+                <div className="font-mono text-sm text-slate-600">
                   {result.order.order_no}
                 </div>
-                <div className="text-xl font-semibold text-slate-100">
+                <div className="text-xl font-semibold text-slate-900">
                   <Money value={result.order.total} />
                 </div>
               </div>
@@ -161,11 +161,11 @@ function NewOrder() {
                 Credit {result.credit.decision} · status {result.order.status}
               </Badge>
             </div>
-            <div className="rounded-md border border-slate-800 bg-slate-950/60 p-3 text-sm">
+            <div className="rounded-md border border-slate-200 bg-slate-100/60 p-3 text-sm">
               <div className="mb-1 text-xs uppercase tracking-wide text-slate-500">
                 Credit engine
               </div>
-              <ul className="space-y-1 text-sm text-slate-200">
+              <ul className="space-y-1 text-sm text-slate-800">
                 {result.credit.reasons.map((r) => (
                   <li key={r} className="flex items-start gap-2">
                     <span className="mt-0.5 text-amber-400">•</span>
@@ -201,7 +201,7 @@ function NewOrder() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">New order</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">New order</h1>
         <Link to="/orders" className="text-sm text-amber-400 hover:underline">
           ← Orders
         </Link>
@@ -251,7 +251,7 @@ function NewOrder() {
 
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-medium uppercase tracking-wide text-slate-400">
+              <h3 className="text-sm font-medium uppercase tracking-wide text-slate-600">
                 Lines
               </h3>
               <Button type="button" variant="secondary" onClick={addLine}>

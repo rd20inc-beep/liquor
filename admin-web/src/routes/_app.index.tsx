@@ -150,12 +150,12 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-100">Dashboard</h1>
+      <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
 
       {/* Today's money movement */}
       <section>
         <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-600">
             Today
           </h2>
           <span className="text-xs text-slate-500">{today}</span>
@@ -199,7 +199,7 @@ function Dashboard() {
       {/* Exposure + pipeline */}
       <section>
         <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-600">
             Exposure
           </h2>
           <Link to="/invoices" className="text-xs text-amber-400 hover:underline">
@@ -272,7 +272,7 @@ function Dashboard() {
                       className="flex items-center justify-between hover:text-amber-400"
                     >
                       <div>
-                        <div className="text-slate-200">
+                        <div className="text-slate-800">
                           {o.customer_name}{' '}
                           <span className="text-xs text-slate-500">({o.customer_code})</span>
                         </div>
@@ -319,7 +319,7 @@ function Dashboard() {
                     <div>
                       <div className="flex items-center gap-2">
                         <Badge tone="blue">{a.type}</Badge>
-                        <span className="text-slate-200">{a.reason ?? '—'}</span>
+                        <span className="text-slate-800">{a.reason ?? '—'}</span>
                       </div>
                       <div className="mt-0.5 text-xs text-slate-500">
                         by {a.requested_by_name ?? 'unknown'} ·{' '}
@@ -350,7 +350,7 @@ function Dashboard() {
             ) : priorityQ.isError ? (
               <div className="text-sm text-slate-500">
                 Priority list unavailable — run{' '}
-                <code className="text-slate-400">POST /admin/jobs/build_priority_list/run</code>.
+                <code className="text-slate-600">POST /admin/jobs/build_priority_list/run</code>.
               </div>
             ) : priorityQ.data?.items.length === 0 ? (
               <div className="text-sm text-slate-500">Nothing to chase today.</div>
@@ -368,19 +368,19 @@ function Dashboard() {
                   {priorityQ.data?.items.slice(0, 8).map((r) => (
                     <tr
                       key={`${r.customer_id}-${r.sequence}`}
-                      className="border-t border-slate-800/60"
+                      className="border-t border-slate-200"
                     >
                       <td className="py-1.5 text-slate-500">{r.sequence}</td>
                       <td>
                         <Link
                           to="/customers/$id"
                           params={{ id: r.customer_id }}
-                          className="text-slate-200 hover:text-amber-400"
+                          className="text-slate-800 hover:text-amber-400"
                         >
                           {r.customer_name}
                         </Link>
                       </td>
-                      <td className="text-xs text-slate-400">{formatPriorityReason(r.reason)}</td>
+                      <td className="text-xs text-slate-600">{formatPriorityReason(r.reason)}</td>
                       <td className="text-right">
                         <Money value={r.outstanding} />
                       </td>
@@ -417,26 +417,26 @@ function Dashboard() {
                 </thead>
                 <tbody>
                   {topOverdue.map((c) => (
-                    <tr key={c.id} className="border-t border-slate-800/60">
+                    <tr key={c.id} className="border-t border-slate-200">
                       <td className="py-1.5">
                         <Link
                           to="/customers/$id"
                           params={{ id: c.id }}
-                          className="text-slate-200 hover:text-amber-400"
+                          className="text-slate-800 hover:text-amber-400"
                         >
                           {c.name}
                         </Link>
                         <span className="ml-1 text-xs text-slate-500">({c.code})</span>
                       </td>
-                      <td className="text-right text-slate-400">{c.count}</td>
+                      <td className="text-right text-slate-600">{c.count}</td>
                       <td className="text-right">
                         <span
                           className={
                             c.oldest > 60
-                              ? 'text-red-400'
+                              ? 'text-red-600'
                               : c.oldest > 30
                                 ? 'text-amber-400'
-                                : 'text-slate-300'
+                                : 'text-slate-700'
                           }
                         >
                           {c.oldest}d

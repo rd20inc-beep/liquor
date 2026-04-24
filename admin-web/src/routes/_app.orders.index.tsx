@@ -92,7 +92,7 @@ function Orders() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">Orders</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Orders</h1>
         <Link to="/orders/new">
           <Button>+ New order</Button>
         </Link>
@@ -124,7 +124,7 @@ function Orders() {
 
       <Card>
         <div className="mb-3 flex flex-wrap items-center gap-3">
-          <div className="flex gap-1 rounded-md border border-slate-800 bg-slate-950/40 p-1">
+          <div className="flex gap-1 rounded-md border border-slate-200 bg-slate-50 p-1">
             {FILTER_TABS.map((t) => {
               const active = filter === t.id;
               return (
@@ -134,8 +134,8 @@ function Orders() {
                   onClick={() => setFilter(t.id)}
                   className={`rounded px-3 py-1 text-xs font-medium transition ${
                     active
-                      ? 'bg-slate-700 text-slate-100'
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                      ? 'bg-slate-300 text-slate-900'
+                      : 'text-slate-600 hover:bg-slate-200 hover:text-slate-800'
                   }`}
                 >
                   {t.label}
@@ -165,7 +165,7 @@ function Orders() {
           </div>
         ) : (
           <div className="w-full text-sm">
-            <div className="grid grid-cols-[140px_110px_1fr_110px_140px_80px] gap-x-3 border-b border-slate-800 pb-2 text-xs uppercase text-slate-500">
+            <div className="grid grid-cols-[140px_110px_1fr_110px_140px_80px] gap-x-3 border-b border-slate-200 pb-2 text-xs uppercase text-slate-500">
               <div>Order</div>
               <div>Date</div>
               <div>Customer</div>
@@ -177,10 +177,10 @@ function Orders() {
               <a
                 key={o.id}
                 href={`/orders/${o.id}`}
-                className="grid grid-cols-[140px_110px_1fr_110px_140px_80px] items-center gap-x-3 border-b border-slate-800/60 py-2 text-slate-200 no-underline transition hover:bg-slate-900/70"
+                className="grid grid-cols-[140px_110px_1fr_110px_140px_80px] items-center gap-x-3 border-b border-slate-200 py-2 text-slate-800 no-underline transition hover:bg-slate-100/70"
               >
                 <div className="font-mono text-xs text-amber-400">{o.order_no}</div>
-                <div className="text-xs text-slate-400">{o.order_date?.slice(0, 10)}</div>
+                <div className="text-xs text-slate-600">{o.order_date?.slice(0, 10)}</div>
                 <div>
                   {o.customer_name}{' '}
                   <span className="text-xs text-slate-500">({o.customer_code})</span>

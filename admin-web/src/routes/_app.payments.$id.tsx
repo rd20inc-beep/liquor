@@ -71,7 +71,7 @@ function PaymentDetail() {
 
   if (paymentQ.isLoading) return <Spinner label="Loading payment" />;
   if (paymentQ.isError || !paymentQ.data)
-    return <div className="text-sm text-red-400">Payment not found.</div>;
+    return <div className="text-sm text-red-600">Payment not found.</div>;
 
   const p = paymentQ.data;
   const amt = Number(p.amount);
@@ -85,14 +85,14 @@ function PaymentDetail() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Payment</div>
-          <h1 className="text-2xl font-semibold text-slate-100">
+          <h1 className="text-2xl font-semibold text-slate-900">
             {p.receipt_no}{' '}
             <Badge tone={verTone[p.verification_status] ?? 'slate'}>
               {p.verification_status}
             </Badge>{' '}
             <Badge>{p.mode}</Badge>
           </h1>
-          <div className="mt-1 text-sm text-slate-400">
+          <div className="mt-1 text-sm text-slate-600">
             <Link
               to="/customers/$id"
               params={{ id: p.customer_id }}
@@ -133,15 +133,15 @@ function PaymentDetail() {
           <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-3">
             <div>
               <div className="text-xs uppercase text-slate-500">Bank</div>
-              <div className="text-slate-200">{p.bank_name ?? '—'}</div>
+              <div className="text-slate-800">{p.bank_name ?? '—'}</div>
             </div>
             <div>
               <div className="text-xs uppercase text-slate-500">Cheque date</div>
-              <div className="text-slate-200">{p.cheque_date ?? '—'}</div>
+              <div className="text-slate-800">{p.cheque_date ?? '—'}</div>
             </div>
             <div>
               <div className="text-xs uppercase text-slate-500">Reference</div>
-              <div className="font-mono text-slate-200">{p.mode_ref ?? '—'}</div>
+              <div className="font-mono text-slate-800">{p.mode_ref ?? '—'}</div>
             </div>
           </div>
         </Card>
@@ -164,7 +164,7 @@ function PaymentDetail() {
             </thead>
             <tbody>
               {p.allocations.map((a) => (
-                <tr key={a.invoice_id} className="border-t border-slate-800/60">
+                <tr key={a.invoice_id} className="border-t border-slate-200">
                   <td className="py-1.5 font-mono text-xs">
                     <Link
                       to="/invoices/$id"
@@ -227,7 +227,7 @@ function PaymentDetail() {
               />
             </Field>
             {showAction === 'bounce' && (
-              <p className="text-xs text-amber-300">
+              <p className="text-xs text-amber-700">
                 Bouncing appends a compensating debit to the AR ledger, restores outstanding on
                 every previously-allocated invoice, and locks the payment as <code>bounced</code>.
               </p>
