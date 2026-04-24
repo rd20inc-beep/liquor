@@ -74,7 +74,7 @@ function NewReceipt() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-100">Goods receipt</h1>
-        <Link to="/inventory" className="text-sm text-violet-400 hover:underline">
+        <Link to="/inventory" className="text-sm text-amber-400 hover:underline">
           ← Inventory
         </Link>
       </div>

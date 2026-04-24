@@ -96,7 +96,7 @@ function PaymentDetail() {
             <Link
               to="/customers/$id"
               params={{ id: p.customer_id }}
-              className="hover:text-violet-400"
+              className="hover:text-amber-400"
             >
               {p.customer_name}
             </Link>{' '}
@@ -105,7 +105,7 @@ function PaymentDetail() {
             {new Date(p.collected_at).toLocaleString()}
           </div>
         </div>
-        <Link to="/payments" className="text-sm text-violet-400 hover:underline">
+        <Link to="/payments" className="text-sm text-amber-400 hover:underline">
           ← Payments
         </Link>
       </div>
@@ -169,7 +169,7 @@ function PaymentDetail() {
                     <Link
                       to="/invoices/$id"
                       params={{ id: a.invoice_id }}
-                      className="text-violet-400 underline-offset-2 hover:underline"
+                      className="text-amber-400 underline-offset-2 hover:underline"
                     >
                       {a.invoice_no}
                     </Link>

@@ -98,7 +98,7 @@ function PriceListDetail() {
             {pl.effective_to?.slice(0, 10) ?? 'open'}
           </div>
         </div>
-        <Link to="/price-lists" className="text-sm text-violet-400 hover:underline">
+        <Link to="/price-lists" className="text-sm text-amber-400 hover:underline">
           ← All price lists
         </Link>
       </div>

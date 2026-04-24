@@ -127,7 +127,7 @@ function CustomerDetail() {
           <Link to="/payments/new" search={{ customer_id: id }}>
             <Button variant="secondary">Record payment</Button>
           </Link>
-          <Link to="/customers" className="text-sm text-violet-400 hover:underline">
+          <Link to="/customers" className="text-sm text-amber-400 hover:underline">
             ← All customers
           </Link>
         </div>
@@ -169,7 +169,7 @@ function CustomerDetail() {
                 <Link
                   to="/price-lists/$id"
                   params={{ id: c.price_list_id }}
-                  className="text-violet-400 underline-offset-2 hover:underline"
+                  className="text-amber-400 underline-offset-2 hover:underline"
                 >
                   {currentList?.name ?? c.price_list_id.slice(0, 8) + '…'}
                 </Link>
@@ -244,7 +244,7 @@ function CustomerDetail() {
                       <Link
                         to="/invoices/$id"
                         params={{ id: inv.id }}
-                        className="text-violet-400 underline-offset-2 hover:underline"
+                        className="text-amber-400 underline-offset-2 hover:underline"
                       >
                         {inv.invoice_no}
                       </Link>
@@ -286,7 +286,7 @@ function CustomerDetail() {
                       <Link
                         to="/orders/$id"
                         params={{ id: o.id }}
-                        className="text-violet-400 underline-offset-2 hover:underline"
+                        className="text-amber-400 underline-offset-2 hover:underline"
                       >
                         {o.order_no}
                       </Link>
@@ -325,7 +325,7 @@ function CustomerDetail() {
                       <Link
                         to="/payments/$id"
                         params={{ id: p.id }}
-                        className="text-violet-400 underline-offset-2 hover:underline"
+                        className="text-amber-400 underline-offset-2 hover:underline"
                       >
                         {p.receipt_no}
                       </Link>
@@ -372,7 +372,7 @@ function CustomerDetail() {
             </ul>
           )}
           {data.suggestions.due_for_reorder && (
-            <div className="mt-3 rounded-md border border-violet-900/50 bg-violet-950/40 p-2 text-xs text-violet-300">
+            <div className="mt-3 rounded-md border border-amber-900/50 bg-amber-950/40 p-2 text-xs text-amber-300">
               Due for reorder based on past cadence.
             </div>
           )}
