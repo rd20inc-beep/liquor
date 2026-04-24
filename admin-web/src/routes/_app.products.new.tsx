@@ -83,7 +83,7 @@ function NewProduct() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">New product</h1>
-        <Link to="/products" className="text-sm text-amber-400 hover:underline">
+        <Link to="/products" className="text-sm text-indigo-600 hover:underline">
           ← All products
         </Link>
       </div>

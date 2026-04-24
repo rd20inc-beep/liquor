@@ -139,7 +139,7 @@ function InvoiceDetail() {
             <Link
               to="/customers/$id"
               params={{ id: inv.customer_id }}
-              className="hover:text-amber-400"
+              className="hover:text-indigo-600"
             >
               {inv.customer_name}
             </Link>{' '}
@@ -153,7 +153,7 @@ function InvoiceDetail() {
             )}
           </div>
         </div>
-        <Link to="/invoices" className="text-sm text-amber-400 hover:underline">
+        <Link to="/invoices" className="text-sm text-indigo-600 hover:underline">
           ← Invoices
         </Link>
       </div>
@@ -181,7 +181,7 @@ function InvoiceDetail() {
           <Link
             to="/orders/$id"
             params={{ id: inv.order_id }}
-            className="text-amber-400 underline-offset-2 hover:underline"
+            className="text-indigo-600 underline-offset-2 hover:underline"
           >
             Open order
           </Link>
@@ -257,7 +257,7 @@ function InvoiceDetail() {
                     <Link
                       to="/payments/$id"
                       params={{ id: a.payment_id }}
-                      className="text-amber-400 underline-offset-2 hover:underline"
+                      className="text-indigo-600 underline-offset-2 hover:underline"
                     >
                       {a.receipt_no}
                     </Link>

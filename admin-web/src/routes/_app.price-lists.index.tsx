@@ -65,7 +65,7 @@ function PriceListsIndex() {
                   {pl.effective_to ? pl.effective_to.slice(0, 10) : '—'}
                 </div>
                 <div className="text-slate-700">{pl.item_count}</div>
-                <div className="text-right text-amber-400">Open →</div>
+                <div className="text-right text-indigo-600">Open →</div>
               </a>
             ))}
           </div>

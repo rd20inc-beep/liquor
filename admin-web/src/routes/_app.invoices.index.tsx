@@ -64,7 +64,7 @@ function Invoices() {
                   onClick={() => void navigate({ to: '/invoices/$id', params: { id: i.id } })}
                   className="cursor-pointer border-t border-slate-200 hover:bg-white"
                 >
-                  <td className="py-2 font-mono text-xs text-amber-400">{i.invoice_no}</td>
+                  <td className="py-2 font-mono text-xs text-indigo-600">{i.invoice_no}</td>
                   <td>
                     {i.customer_name}{' '}
                     <span className="text-xs text-slate-500">({i.customer_code})</span>

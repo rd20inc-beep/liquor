@@ -127,7 +127,7 @@ function CustomerDetail() {
           <Link to="/payments/new" search={{ customer_id: id }}>
             <Button variant="secondary">Record payment</Button>
           </Link>
-          <Link to="/customers" className="text-sm text-amber-400 hover:underline">
+          <Link to="/customers" className="text-sm text-indigo-600 hover:underline">
             ← All customers
           </Link>
         </div>
@@ -169,7 +169,7 @@ function CustomerDetail() {
                 <Link
                   to="/price-lists/$id"
                   params={{ id: c.price_list_id }}
-                  className="text-amber-400 underline-offset-2 hover:underline"
+                  className="text-indigo-600 underline-offset-2 hover:underline"
                 >
                   {currentList?.name ?? c.price_list_id.slice(0, 8) + '…'}
                 </Link>
@@ -244,7 +244,7 @@ function CustomerDetail() {
                       <Link
                         to="/invoices/$id"
                         params={{ id: inv.id }}
-                        className="text-amber-400 underline-offset-2 hover:underline"
+                        className="text-indigo-600 underline-offset-2 hover:underline"
                       >
                         {inv.invoice_no}
                       </Link>
@@ -286,7 +286,7 @@ function CustomerDetail() {
                       <Link
                         to="/orders/$id"
                         params={{ id: o.id }}
-                        className="text-amber-400 underline-offset-2 hover:underline"
+                        className="text-indigo-600 underline-offset-2 hover:underline"
                       >
                         {o.order_no}
                       </Link>
@@ -325,7 +325,7 @@ function CustomerDetail() {
                       <Link
                         to="/payments/$id"
                         params={{ id: p.id }}
-                        className="text-amber-400 underline-offset-2 hover:underline"
+                        className="text-indigo-600 underline-offset-2 hover:underline"
                       >
                         {p.receipt_no}
                       </Link>

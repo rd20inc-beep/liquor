@@ -91,7 +91,7 @@ function NewPayment() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-slate-900">Payment recorded</h1>
-          <Link to="/payments" className="text-sm text-amber-400 hover:underline">
+          <Link to="/payments" className="text-sm text-indigo-600 hover:underline">
             ← Payments
           </Link>
         </div>
@@ -165,7 +165,7 @@ function NewPayment() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">Record payment</h1>
-        <Link to="/payments" className="text-sm text-amber-400 hover:underline">
+        <Link to="/payments" className="text-sm text-indigo-600 hover:underline">
           ← Payments
         </Link>
       </div>

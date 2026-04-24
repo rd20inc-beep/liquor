@@ -106,7 +106,7 @@ function CustomersList() {
                       <Link
                         to="/customers/$id"
                         params={{ id: c.id }}
-                        className="text-slate-800 hover:text-amber-400"
+                        className="text-slate-800 hover:text-indigo-600"
                       >
                         {c.name}
                       </Link>

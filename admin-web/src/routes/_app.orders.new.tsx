@@ -142,7 +142,7 @@ function NewOrder() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-slate-900">Order submitted</h1>
-          <Link to="/orders" className="text-sm text-amber-400 hover:underline">
+          <Link to="/orders" className="text-sm text-indigo-600 hover:underline">
             ← Orders
           </Link>
         </div>
@@ -168,7 +168,7 @@ function NewOrder() {
               <ul className="space-y-1 text-sm text-slate-800">
                 {result.credit.reasons.map((r) => (
                   <li key={r} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-amber-400">•</span>
+                    <span className="mt-0.5 text-indigo-600">•</span>
                     <span>{formatCreditReason(r)}</span>
                   </li>
                 ))}
@@ -202,7 +202,7 @@ function NewOrder() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">New order</h1>
-        <Link to="/orders" className="text-sm text-amber-400 hover:underline">
+        <Link to="/orders" className="text-sm text-indigo-600 hover:underline">
           ← Orders
         </Link>
       </div>

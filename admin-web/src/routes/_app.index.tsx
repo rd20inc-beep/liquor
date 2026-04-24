@@ -202,7 +202,7 @@ function Dashboard() {
           <h2 className="text-sm font-medium uppercase tracking-wide text-slate-600">
             Exposure
           </h2>
-          <Link to="/invoices" className="text-xs text-amber-400 hover:underline">
+          <Link to="/invoices" className="text-xs text-indigo-600 hover:underline">
             Invoices →
           </Link>
         </div>
@@ -253,7 +253,7 @@ function Dashboard() {
               </span>
             }
             actions={
-              <Link to="/orders" className="text-xs text-amber-400 hover:underline">
+              <Link to="/orders" className="text-xs text-indigo-600 hover:underline">
                 Review →
               </Link>
             }
@@ -269,7 +269,7 @@ function Dashboard() {
                     <Link
                       to="/orders/$id"
                       params={{ id: o.id }}
-                      className="flex items-center justify-between hover:text-amber-400"
+                      className="flex items-center justify-between hover:text-indigo-600"
                     >
                       <div>
                         <div className="text-slate-800">
@@ -303,7 +303,7 @@ function Dashboard() {
               </span>
             }
             actions={
-              <Link to="/approvals" className="text-xs text-amber-400 hover:underline">
+              <Link to="/approvals" className="text-xs text-indigo-600 hover:underline">
                 Inbox →
               </Link>
             }
@@ -340,7 +340,7 @@ function Dashboard() {
           <Card
             title="Today's priority list"
             actions={
-              <Link to="/customers" className="text-xs text-amber-400 hover:underline">
+              <Link to="/customers" className="text-xs text-indigo-600 hover:underline">
                 Customers →
               </Link>
             }
@@ -375,7 +375,7 @@ function Dashboard() {
                         <Link
                           to="/customers/$id"
                           params={{ id: r.customer_id }}
-                          className="text-slate-800 hover:text-amber-400"
+                          className="text-slate-800 hover:text-indigo-600"
                         >
                           {r.customer_name}
                         </Link>
@@ -422,7 +422,7 @@ function Dashboard() {
                         <Link
                           to="/customers/$id"
                           params={{ id: c.id }}
-                          className="text-slate-800 hover:text-amber-400"
+                          className="text-slate-800 hover:text-indigo-600"
                         >
                           {c.name}
                         </Link>
@@ -435,7 +435,7 @@ function Dashboard() {
                             c.oldest > 60
                               ? 'text-red-600'
                               : c.oldest > 30
-                                ? 'text-amber-400'
+                                ? 'text-indigo-600'
                                 : 'text-slate-700'
                           }
                         >

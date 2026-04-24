@@ -222,7 +222,7 @@ function OrderDetail() {
     return (
       <div className="space-y-2">
         <ErrorNote message={`Could not load order (id=${id}): ${msg}`} />
-        <Link to="/orders" className="text-sm text-amber-400 hover:underline">
+        <Link to="/orders" className="text-sm text-indigo-600 hover:underline">
           ← Back to orders
         </Link>
       </div>
@@ -250,14 +250,14 @@ function OrderDetail() {
             <Link
               to="/customers/$id"
               params={{ id: o.customer_id }}
-              className="hover:text-amber-400"
+              className="hover:text-indigo-600"
             >
               {o.customer_name}
             </Link>{' '}
             <span className="text-slate-500">({o.customer_code})</span> · {o.order_date} · {o.channel}
           </div>
         </div>
-        <Link to="/orders" className="text-sm text-amber-400 hover:underline">
+        <Link to="/orders" className="text-sm text-indigo-600 hover:underline">
           ← Orders
         </Link>
       </div>
@@ -300,7 +300,7 @@ function OrderDetail() {
           <ul className="space-y-1 text-sm text-slate-800">
             {o.credit_reasons.map((r) => (
               <li key={r} className="flex items-start gap-2">
-                <span className="mt-0.5 text-amber-400">•</span>
+                <span className="mt-0.5 text-indigo-600">•</span>
                 <span>{formatCreditReason(r)}</span>
               </li>
             ))}
@@ -354,7 +354,7 @@ function OrderDetail() {
                   <div>
                     <a
                       href={`/invoices/${tiedInvoice.id}`}
-                      className="font-mono text-sm text-amber-400 hover:underline"
+                      className="font-mono text-sm text-indigo-600 hover:underline"
                     >
                       {tiedInvoice.invoice_no}
                     </a>
@@ -426,7 +426,7 @@ function OrderDetail() {
                 .map((evt) => {
                   const icon =
                     evt.action === 'create'
-                      ? { sym: '+', tone: 'bg-amber-600' }
+                      ? { sym: '+', tone: 'bg-indigo-600' }
                       : evt.action === 'override'
                         ? { sym: '!', tone: 'bg-amber-500' }
                         : evt.action === 'approve'

@@ -15,7 +15,7 @@ export function Button({
   const base =
     'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-slate-50 disabled:opacity-50';
   const variants = {
-    primary: 'bg-amber-600 hover:bg-amber-700 text-white focus:ring-amber-500',
+    primary: 'bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500',
     secondary:
       'bg-white hover:bg-slate-50 text-slate-800 ring-1 ring-inset ring-slate-300 focus:ring-slate-400',
     ghost: 'bg-transparent shadow-none hover:bg-slate-100 text-slate-700 focus:ring-slate-300',
@@ -30,7 +30,7 @@ export function Input({
 }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${className}`}
+      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 ${className}`}
       {...props}
     />
   );
@@ -43,7 +43,7 @@ export function Select({
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${className}`}
+      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 ${className}`}
       {...props}
     >
       {children}
@@ -142,11 +142,11 @@ export function Badge({
   const tones = {
     slate: 'bg-slate-100 text-slate-700 ring-slate-200',
     green: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-    // "amber" tone = warning, uses orange so it doesn't collide with the primary amber
-    amber: 'bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-200',
+    // "amber" tone = warning (classic)
+    amber: 'bg-amber-50 text-amber-800 ring-amber-200',
     red: 'bg-red-50 text-red-700 ring-red-200',
-    // "blue" tone = primary, renders with brand amber (gold)
-    blue: 'bg-amber-50 text-amber-800 ring-amber-200',
+    // "blue" tone = primary (indigo)
+    blue: 'bg-indigo-50 text-indigo-700 ring-indigo-200',
   };
   return (
     <span
@@ -170,11 +170,11 @@ export function Tile({
 }) {
   const accent = {
     green: 'border-l-emerald-600',
-    // warning = orange (primary is amber — don't collide)
-    amber: 'border-l-fuchsia-500',
+    // warning (amber)
+    amber: 'border-l-amber-500',
     red: 'border-l-red-500',
-    // primary = amber/gold
-    blue: 'border-l-amber-500',
+    // primary (indigo)
+    blue: 'border-l-indigo-600',
   };
   return (
     <div
@@ -196,7 +196,7 @@ export function Tile({
 export function Spinner({ label }: { label?: string }) {
   return (
     <div className="flex items-center gap-2 text-sm text-slate-600">
-      <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-amber-500" />
+      <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-500" />
       {label && <span>{label}</span>}
     </div>
   );
