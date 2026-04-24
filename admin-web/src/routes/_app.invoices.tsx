@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Badge, Card, Money, Spinner } from '../components/ui';
 import { api } from '../lib/api';
 
@@ -29,6 +29,7 @@ const statusTone: Record<string, 'slate' | 'green' | 'amber' | 'red' | 'blue'> =
 };
 
 function Invoices() {
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ['invoices'],
     queryFn: () => api.get<{ items: Invoice[] }>('/invoices?limit=100'),
@@ -53,17 +54,22 @@ function Invoices() {
                 <th className="text-right">Total</th>
                 <th className="text-right">Outstanding</th>
                 <th className="text-right">Overdue</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {data?.items.map((i) => (
-                <tr key={i.id} className="border-t border-slate-800/60">
-                  <td className="py-1.5 font-mono text-xs">{i.invoice_no}</td>
+                <tr
+                  key={i.id}
+                  onClick={() => void navigate({ to: '/invoices/$id', params: { id: i.id } })}
+                  className="cursor-pointer border-t border-slate-800/60 hover:bg-slate-900/60"
+                >
+                  <td className="py-2 font-mono text-xs text-blue-400">{i.invoice_no}</td>
                   <td>
                     {i.customer_name}{' '}
                     <span className="text-xs text-slate-500">({i.customer_code})</span>
                   </td>
-                  <td className="text-xs text-slate-400">{i.due_date}</td>
+                  <td className="text-xs text-slate-400">{i.due_date?.slice(0, 10)}</td>
                   <td>
                     <Badge tone={statusTone[i.status] ?? 'slate'}>{i.status}</Badge>
                   </td>
@@ -76,6 +82,7 @@ function Invoices() {
                   <td className="text-right text-xs">
                     {i.days_overdue > 0 ? `${i.days_overdue}d` : '—'}
                   </td>
+                  <td className="text-right text-sm text-slate-500">Open →</td>
                 </tr>
               ))}
             </tbody>

@@ -150,8 +150,16 @@ function CustomerDetail() {
               <tbody>
                 {data.open_invoices.map((inv) => (
                   <tr key={inv.id} className="border-t border-slate-800/60">
-                    <td className="py-1.5">{inv.invoice_no}</td>
-                    <td className="text-xs text-slate-400">{inv.due_date}</td>
+                    <td className="py-1.5 font-mono text-xs">
+                      <Link
+                        to="/invoices/$id"
+                        params={{ id: inv.id }}
+                        className="text-blue-400 underline-offset-2 hover:underline"
+                      >
+                        {inv.invoice_no}
+                      </Link>
+                    </td>
+                    <td className="text-xs text-slate-400">{inv.due_date?.slice(0, 10)}</td>
                     <td className="text-right">
                       <Money value={inv.total} />
                     </td>

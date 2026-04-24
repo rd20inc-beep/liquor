@@ -165,8 +165,14 @@ function PaymentDetail() {
             <tbody>
               {p.allocations.map((a) => (
                 <tr key={a.invoice_id} className="border-t border-slate-800/60">
-                  <td className="py-1.5 font-mono text-xs text-slate-200">
-                    {a.invoice_no}
+                  <td className="py-1.5 font-mono text-xs">
+                    <Link
+                      to="/invoices/$id"
+                      params={{ id: a.invoice_id }}
+                      className="text-blue-400 underline-offset-2 hover:underline"
+                    >
+                      {a.invoice_no}
+                    </Link>
                   </td>
                   <td className="text-right">
                     <Money value={a.total} />
