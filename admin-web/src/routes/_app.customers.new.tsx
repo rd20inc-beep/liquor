@@ -25,7 +25,7 @@ interface PriceList {
 }
 
 interface CreateBody {
-  code: string;
+  code?: string;
   name: string;
   type: string;
   phone?: string;
@@ -80,12 +80,12 @@ function NewCustomer() {
     e.preventDefault();
     setError(null);
     const body: CreateBody = {
-      code: form.code.trim(),
       name: form.name.trim(),
       type: form.type,
       credit_limit: Number(form.credit_limit) || 0,
       high_value: form.high_value,
     };
+    if (form.code.trim()) body.code = form.code.trim();
     if (form.phone.trim()) body.phone = form.phone.trim();
     if (form.address.trim()) body.address = form.address.trim();
     if (form.route_id) body.route_id = form.route_id;
@@ -107,12 +107,11 @@ function NewCustomer() {
 
       <Card>
         <form onSubmit={submit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Code">
+          <Field label="Code" optional hint="Auto-generated (C-NNNNN) if blank">
             <Input
-              required
               autoFocus
               maxLength={50}
-              placeholder="C-009"
+              placeholder="auto"
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
             />

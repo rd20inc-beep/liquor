@@ -848,6 +848,15 @@ CREATE INDEX audit_entity  ON audit_log(entity, entity_id, ts);
 CREATE INDEX audit_user    ON audit_log(user_id, ts);
 CREATE INDEX audit_org_ts  ON audit_log(org_id, ts);
 
+-- Per-org, per-doc-type, per-year counters for human-readable numbers
+CREATE TABLE doc_counters (
+    org_id    uuid NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
+    doc_type  text NOT NULL,
+    year      integer NOT NULL,
+    seq       integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (org_id, doc_type, year)
+);
+
 -- ============================================================================
 -- SYNC (offline journal from mobile)
 -- ============================================================================

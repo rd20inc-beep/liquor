@@ -12,6 +12,7 @@ import {
   decide,
 } from '../services/credit-engine.js';
 import { refreshCreditState } from '../services/credit-state.js';
+import { orderNo } from '../services/doc-numbers.js';
 import { resolvePrice } from '../services/pricing.js';
 import { releaseReservation, reserveStock } from '../services/stock.js';
 
@@ -70,12 +71,7 @@ const ListQuery = z.object({
 
 // ---------- Helpers ----------
 
-function generateOrderNo(): string {
-  const d = new Date();
-  const ymd = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
-  const rand = crypto.randomUUID().slice(0, 6).toUpperCase();
-  return `SO-${ymd}-${rand}`;
-}
+// Order numbers are allocated via doc-numbers.orderNo(tx, orgId)
 
 async function loadOrgConfig(orgId: string): Promise<CreditConfig> {
   const [row] = await sql<Array<{ risk_threshold: string; broken_promise_limit: number }>>`
@@ -280,6 +276,7 @@ export default async function orderRoutes(app: FastifyInstance) {
       else newStatus = 'draft'; // rejected — keep as draft with decision=reject so rep sees reasons
 
       const repId = req.user.role === 'sales' ? req.user.sub : null;
+      const nextOrderNo = await orderNo(tx, orgId);
 
       const [order] = await tx`
           INSERT INTO sales_orders (
@@ -287,7 +284,7 @@ export default async function orderRoutes(app: FastifyInstance) {
             status, credit_decision, credit_reasons,
             subtotal, tax_total, total, notes, idempotency_key
           ) VALUES (
-            ${orgId}, ${generateOrderNo()}, ${d.customer_id}, ${repId},
+            ${orgId}, ${nextOrderNo}, ${d.customer_id}, ${repId},
             ${d.channel}, ${orderDate},
             ${newStatus}, ${creditResult.decision}, ${sql.json(creditResult.reasons)},
             ${subtotal}, ${taxTotal}, ${total}, ${d.notes ?? null},

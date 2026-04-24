@@ -848,6 +848,16 @@ CREATE INDEX audit_entity  ON audit_log(entity, entity_id, ts);
 CREATE INDEX audit_user    ON audit_log(user_id, ts);
 CREATE INDEX audit_org_ts  ON audit_log(org_id, ts);
 
+-- Per-org, per-doc-type, per-year counters for human-readable numbers
+-- (e.g. SO-26-00042, INV-26-00001, C-00017).
+CREATE TABLE doc_counters (
+    org_id    uuid NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
+    doc_type  text NOT NULL,       -- 'order' | 'invoice' | 'receipt' | 'credit_note' | 'customer'
+    year      integer NOT NULL,    -- 2-digit YY (customer counters use 0 to skip year)
+    seq       integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (org_id, doc_type, year)
+);
+
 -- ============================================================================
 -- SYNC (offline journal from mobile)
 -- ============================================================================

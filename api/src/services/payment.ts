@@ -3,6 +3,7 @@ import type { Sql } from 'postgres';
 import { badRequest, conflict, notFound } from '../errors.js';
 import { appendLedger } from './ar-ledger.js';
 import { audit } from './audit.js';
+import { receiptNo as generateReceiptNo } from './doc-numbers.js';
 import { recomputeInvoiceStatus } from './invoice.js';
 
 export interface AllocationInput {
@@ -40,13 +41,6 @@ export interface RecordPaymentResult {
   ledger_id: number;
   running_balance: number;
   idempotent: boolean;
-}
-
-function generateReceiptNo(): string {
-  const d = new Date();
-  const ymd = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
-  const rand = crypto.randomUUID().slice(0, 6).toUpperCase();
-  return `RC-${ymd}-${rand}`;
 }
 
 /**
@@ -180,7 +174,7 @@ export async function recordPayment(
   // Cash/bank/upi are locked immediately; cheques unlocked until verified.
   const lockNow = mode !== 'cheque';
   const verification = mode === 'cheque' ? 'pending' : 'verified';
-  const receiptNo = generateReceiptNo();
+  const receiptNo = await generateReceiptNo(tx, orgId);
   const collectedAt = input.collected_at ?? new Date().toISOString();
 
   const lockTime = lockNow ? new Date() : null;

@@ -5,12 +5,13 @@ import { sql } from '../db.js';
 import { badRequest, conflict, notFound } from '../errors.js';
 import { rbacGuard } from '../plugins/rbac.js';
 import { refreshCreditState } from '../services/credit-state.js';
+import { customerCode as generateCustomerCode } from '../services/doc-numbers.js';
 import { PriceNotFoundError, resolvePrice } from '../services/pricing.js';
 
 // ---------- Schemas ----------
 
 const CreateCustomerBody = z.object({
-  code: z.string().min(1).max(50),
+  code: z.string().min(1).max(50).optional(),
   name: z.string().min(1).max(200),
   type: CustomerType.optional().default('outlet'),
   route_id: z.string().uuid().optional(),
@@ -256,20 +257,24 @@ export default async function customerRoutes(app: FastifyInstance) {
         : sql`NULL`;
 
     try {
-      const [row] = await sql`
-          INSERT INTO customers (
-            org_id, code, name, type, route_id, route_sequence,
-            geo, address, phone, whatsapp,
-            assigned_rep_id, assigned_collector_id,
-            credit_limit, payment_term_id, price_list_id, high_value
-          ) VALUES (
-            ${orgId}, ${d.code}, ${d.name}, ${d.type}, ${d.route_id ?? null}, ${d.route_sequence ?? null},
-            ${geo}, ${d.address ?? null}, ${d.phone ?? null}, ${d.whatsapp ?? null},
-            ${d.assigned_rep_id ?? null}, ${d.assigned_collector_id ?? null},
-            ${d.credit_limit}, ${d.payment_term_id ?? null}, ${d.price_list_id ?? null}, ${d.high_value}
-          )
-          RETURNING *
-        `;
+      const row = await sql.begin(async (tx) => {
+        const code = d.code?.trim() || (await generateCustomerCode(tx, orgId));
+        const [inserted] = await tx`
+            INSERT INTO customers (
+              org_id, code, name, type, route_id, route_sequence,
+              geo, address, phone, whatsapp,
+              assigned_rep_id, assigned_collector_id,
+              credit_limit, payment_term_id, price_list_id, high_value
+            ) VALUES (
+              ${orgId}, ${code}, ${d.name}, ${d.type}, ${d.route_id ?? null}, ${d.route_sequence ?? null},
+              ${geo}, ${d.address ?? null}, ${d.phone ?? null}, ${d.whatsapp ?? null},
+              ${d.assigned_rep_id ?? null}, ${d.assigned_collector_id ?? null},
+              ${d.credit_limit}, ${d.payment_term_id ?? null}, ${d.price_list_id ?? null}, ${d.high_value}
+            )
+            RETURNING *
+          `;
+        return inserted;
+      });
       // Trigger auto-creates credit_state row; refresh it to set available_credit
       await refreshCreditState(row!.id);
       return reply.status(201).send(row);

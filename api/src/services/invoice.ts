@@ -2,6 +2,7 @@ import type { Sql } from 'postgres';
 import { badRequest, conflict, notFound } from '../errors.js';
 import { appendLedger } from './ar-ledger.js';
 import { audit } from './audit.js';
+import { creditNoteNo, invoiceNo as generateInvoiceNo } from './doc-numbers.js';
 
 export interface PostInvoiceInput {
   orgId: string;
@@ -20,13 +21,6 @@ export interface PostInvoiceResult {
   ledger_id: number;
   running_balance: number;
   idempotent: boolean;
-}
-
-function generateInvoiceNo(): string {
-  const d = new Date();
-  const ymd = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
-  const rand = crypto.randomUUID().slice(0, 6).toUpperCase();
-  return `INV-${ymd}-${rand}`;
 }
 
 /**
@@ -145,7 +139,7 @@ export async function postInvoice(tx: Sql, input: PostInvoiceInput): Promise<Pos
   }
 
   // Create the invoice — locked from birth (locked_at = now())
-  const invoiceNo = generateInvoiceNo();
+  const invoiceNo = await generateInvoiceNo(tx, orgId);
   const subtotal = Number(order.subtotal);
   const taxTotal = Number(order.tax_total);
   const total = Number(order.total);
@@ -307,7 +301,7 @@ export async function applyCreditNote(
     }
   }
 
-  const cnNo = `CN-${new Date().getUTCFullYear()}${String(new Date().getUTCMonth() + 1).padStart(2, '0')}${String(new Date().getUTCDate()).padStart(2, '0')}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+  const cnNo = await creditNoteNo(tx, orgId);
   const [cn] = await tx<Array<{ id: string }>>`
     INSERT INTO credit_notes (
       org_id, cn_no, invoice_id, customer_id, amount, reason, approved_by, locked_at
