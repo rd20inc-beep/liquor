@@ -26,59 +26,25 @@ async function seed() {
   const orgId = org?.id ?? '00000000-0000-0000-0000-000000000001';
   console.log(`  Org: ${orgId}`);
 
-  // 2. Admin user (phone: +923009999000)
-  const [admin] = await sql`
-    INSERT INTO users (id, org_id, name, phone, role)
-    VALUES ('00000000-0000-0000-0000-000000000010', ${orgId}, 'Admin', '+923009999000', 'admin')
-    ON CONFLICT (org_id, phone) DO NOTHING
-    RETURNING id, phone
-  `;
-  console.log(`  Admin: ${admin?.phone ?? '+923009999000 (exists)'}`);
-
-  // 3. Owner user
-  const [owner] = await sql`
-    INSERT INTO users (id, org_id, name, phone, role)
-    VALUES ('00000000-0000-0000-0000-000000000011', ${orgId}, 'Owner', '+923009999001', 'owner')
-    ON CONFLICT (org_id, phone) DO NOTHING
-    RETURNING id, phone
-  `;
-  console.log(`  Owner: ${owner?.phone ?? '+923009999001 (exists)'}`);
-
-  // 4. Sales rep
-  const [rep] = await sql`
-    INSERT INTO users (id, org_id, name, phone, role)
-    VALUES ('00000000-0000-0000-0000-000000000020', ${orgId}, 'Ahmed (Sales)', '+923009999002', 'sales')
-    ON CONFLICT (org_id, phone) DO NOTHING
-    RETURNING id, phone
-  `;
-  console.log(`  Sales Rep: ${rep?.phone ?? '+923009999002 (exists)'}`);
-
-  // 5. Collector
-  const [collector] = await sql`
-    INSERT INTO users (id, org_id, name, phone, role)
-    VALUES ('00000000-0000-0000-0000-000000000030', ${orgId}, 'Bilal (Collector)', '+923009999003', 'collector')
-    ON CONFLICT (org_id, phone) DO NOTHING
-    RETURNING id, phone
-  `;
-  console.log(`  Collector: ${collector?.phone ?? '+923009999003 (exists)'}`);
-
-  // 6. Driver
-  const [driver] = await sql`
-    INSERT INTO users (id, org_id, name, phone, role)
-    VALUES ('00000000-0000-0000-0000-000000000040', ${orgId}, 'Imran (Driver)', '+923009999004', 'driver')
-    ON CONFLICT (org_id, phone) DO NOTHING
-    RETURNING id, phone
-  `;
-  console.log(`  Driver: ${driver?.phone ?? '+923009999004 (exists)'}`);
-
-  // 7. Accounts
-  const [accounts] = await sql`
-    INSERT INTO users (id, org_id, name, phone, role)
-    VALUES ('00000000-0000-0000-0000-000000000050', ${orgId}, 'Ayesha (Accounts)', '+923009999005', 'accounts')
-    ON CONFLICT (org_id, phone) DO NOTHING
-    RETURNING id, phone
-  `;
-  console.log(`  Accounts: ${accounts?.phone ?? '+923009999005 (exists)'}`);
+  // Default logins (idempotent): role + phone + human-readable login_id
+  const seedUsers = [
+    { id: '00000000-0000-0000-0000-000000000010', name: 'Admin',             login: 'admin',   phone: '+923009999000', role: 'admin' },
+    { id: '00000000-0000-0000-0000-000000000011', name: 'Owner',             login: 'owner',   phone: '+923009999001', role: 'owner' },
+    { id: '00000000-0000-0000-0000-000000000020', name: 'Ahmed (Sales)',     login: 'ahmed',   phone: '+923009999002', role: 'sales' },
+    { id: '00000000-0000-0000-0000-000000000030', name: 'Bilal (Collector)', login: 'bilal',   phone: '+923009999003', role: 'collector' },
+    { id: '00000000-0000-0000-0000-000000000040', name: 'Imran (Driver)',    login: 'imran',   phone: '+923009999004', role: 'driver' },
+    { id: '00000000-0000-0000-0000-000000000050', name: 'Ayesha (Accounts)', login: 'ayesha',  phone: '+923009999005', role: 'accounts' },
+  ] as const;
+  for (const u of seedUsers) {
+    await sql`
+      INSERT INTO users (id, org_id, name, login_id, phone, role)
+      VALUES (${u.id}, ${orgId}, ${u.name}, ${u.login}, ${u.phone}, ${u.role})
+      ON CONFLICT (id) DO UPDATE SET
+        login_id = EXCLUDED.login_id,
+        name     = EXCLUDED.name
+    `;
+    console.log(`  ${u.role.padEnd(10)} login=${u.login} phone=${u.phone}`);
+  }
 
   // 8. Default payment terms
   const terms = [

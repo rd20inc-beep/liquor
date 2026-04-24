@@ -18,7 +18,7 @@ interface LoginResp {
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [otp, setOtp] = useState('123456');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ function LoginPage() {
     try {
       const resp = await api.post<LoginResp>(
         '/auth/login',
-        { phone, otp, device_id: navigator.userAgent.slice(0, 80) },
+        { login_id: loginId, otp, device_id: navigator.userAgent.slice(0, 80) },
         { auth: false },
       );
       tokens.set(resp.access_token, resp.refresh_token, {
@@ -59,20 +59,21 @@ function LoginPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (phone.length >= 10 && otp.length === 6) void verify();
+            if (loginId.length >= 2 && otp.length === 6) void verify();
           }}
           className="space-y-3"
         >
           <label className="block">
             <span className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
-              Phone number
+              Login ID
             </span>
             <Input
               autoFocus
-              type="tel"
-              placeholder="9876543210"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
+              type="text"
+              autoComplete="username"
+              placeholder="admin"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value.trim())}
             />
           </label>
           <label className="block">
@@ -90,7 +91,7 @@ function LoginPage() {
           </label>
           <Button
             type="submit"
-            disabled={loading || phone.length < 10 || otp.length !== 6}
+            disabled={loading || loginId.length < 2 || otp.length !== 6}
             className="w-full"
           >
             {loading ? 'Signing in…' : 'Sign in'}

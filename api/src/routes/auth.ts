@@ -6,7 +6,7 @@ import { badRequest, unauthorized } from '../errors.js';
 import { signAccessToken, signRefreshToken, verifyToken } from '../lib/jwt.js';
 
 const LoginBody = z.object({
-  phone: z.string().min(10).max(15),
+  login_id: z.string().min(2).max(50),
   otp: z.string().length(6),
   device_id: z.string().min(1),
 });
@@ -19,7 +19,7 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/auth/login', { config: { public: true } }, async (req, reply) => {
     const body = LoginBody.safeParse(req.body);
     if (!body.success) throw badRequest('Invalid request body', body.error.flatten());
-    const { phone, otp, device_id } = body.data;
+    const { login_id, otp, device_id } = body.data;
 
     // OTP verification — in dev, accept the fixed OTP
     if (isDev()) {
@@ -32,16 +32,16 @@ export default async function authRoutes(app: FastifyInstance) {
       throw badRequest('OTP verification not yet implemented for production');
     }
 
-    // Find user by phone
+    // Find user by login_id (case-insensitive via citext)
     const users = await sql`
-        SELECT u.id, u.name, u.phone, u.role, u.org_id, u.active
+        SELECT u.id, u.name, u.phone, u.login_id, u.role, u.org_id, u.active
         FROM users u
-        WHERE u.phone = ${phone}
+        WHERE u.login_id = ${login_id}
         LIMIT 1
       `;
 
     if (users.length === 0) {
-      throw unauthorized('No user found with this phone number');
+      throw unauthorized('No user found with this login ID');
     }
 
     const user = users[0]!;
@@ -68,6 +68,7 @@ export default async function authRoutes(app: FastifyInstance) {
       user: {
         id: user.id,
         name: user.name,
+        login_id: user.login_id,
         phone: user.phone,
         role: user.role,
         org_id: user.org_id,

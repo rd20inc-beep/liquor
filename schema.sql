@@ -80,7 +80,8 @@ CREATE TABLE users (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id      uuid NOT NULL REFERENCES orgs(id),
     name        text NOT NULL,
-    phone       text NOT NULL,
+    login_id    citext,                         -- human-readable login (e.g. 'admin', 'ahmed')
+    phone       text NOT NULL,                  -- kept for future SMS flows
     email       citext,
     role        user_role NOT NULL,
     active      boolean NOT NULL DEFAULT true,
@@ -88,6 +89,8 @@ CREATE TABLE users (
     UNIQUE (org_id, phone)
 );
 CREATE INDEX users_org_id ON users(org_id);
+-- Unique login_id globally (nullable so existing rows without a login remain valid)
+CREATE UNIQUE INDEX users_login_id_unique ON users(login_id) WHERE login_id IS NOT NULL;
 
 CREATE TABLE user_devices (
     id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
