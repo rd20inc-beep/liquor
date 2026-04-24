@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { Badge, Card, Money, Spinner, Tile } from '../components/ui';
 import { api } from '../lib/api';
+import { formatPriorityReason } from '../lib/formatters';
 
 export const Route = createFileRoute('/_app/')({
   component: Dashboard,
@@ -379,7 +380,7 @@ function Dashboard() {
                           {r.customer_name}
                         </Link>
                       </td>
-                      <td className="text-xs text-slate-400">{r.reason}</td>
+                      <td className="text-xs text-slate-400">{formatPriorityReason(r.reason)}</td>
                       <td className="text-right">
                         <Money value={r.outstanding} />
                       </td>

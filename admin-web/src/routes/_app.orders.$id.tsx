@@ -3,6 +3,7 @@ import { Link, createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Badge, Button, Card, ErrorNote, Field, Input, Money, Select, Spinner, Tile } from '../components/ui';
 import { api, ApiError } from '../lib/api';
+import { formatCreditReason, formatOverrideCode } from '../lib/formatters';
 
 export const Route = createFileRoute('/_app/orders/$id')({
   component: OrderDetail,
@@ -90,13 +91,14 @@ function summarizeEvent(evt: AuditEntry): string {
       const parts: string[] = [`Order created`];
       if (total) parts.push(`total Rs ${Number(total).toLocaleString('en-US')}`);
       if (decision) parts.push(`credit ${decision}`);
-      if (reasons?.length) parts.push(`(${reasons.join(', ')})`);
+      if (reasons?.length) parts.push(`(${reasons.map(formatCreditReason).join('; ')})`);
       return parts.join(' · ');
     }
     case 'override': {
       const code = (after as { reason_code?: string }).reason_code;
       const note = (after as { note?: string }).note;
-      return `Admin override applied${code ? ` · ${code}` : ''}${note ? ` — ${note}` : ''}`;
+      const codeStr = code ? formatOverrideCode(code) : 'Admin override applied';
+      return `${codeStr}${note ? ` — ${note}` : ''}`;
     }
     case 'update': {
       const before = evt.before_json ?? {};
@@ -278,27 +280,29 @@ function OrderDetail() {
                   ? 'red'
                   : undefined
           }
-          sub={o.credit_reasons?.[0] ?? undefined}
+          sub={o.credit_reasons?.[0] ? formatCreditReason(o.credit_reasons[0]) : undefined}
         />
       </div>
 
       {o.override_reason_code && (
         <Card title="Override">
           <div className="space-y-1 text-sm">
-            <div className="text-slate-400">
-              Reason code:{' '}
-              <span className="font-mono text-slate-200">{o.override_reason_code}</span>
+            <div className="text-slate-200">
+              {formatOverrideCode(o.override_reason_code)}
             </div>
-            <div className="text-slate-300">{o.override_note ?? '—'}</div>
+            {o.override_note && <div className="text-slate-400">{o.override_note}</div>}
           </div>
         </Card>
       )}
 
       {o.credit_reasons && o.credit_reasons.length > 0 && (
         <Card title="Credit engine reasons">
-          <ul className="space-y-0.5 font-mono text-xs text-slate-300">
+          <ul className="space-y-1 text-sm text-slate-200">
             {o.credit_reasons.map((r) => (
-              <li key={r}>· {r}</li>
+              <li key={r} className="flex items-start gap-2">
+                <span className="mt-0.5 text-amber-400">•</span>
+                <span>{formatCreditReason(r)}</span>
+              </li>
             ))}
           </ul>
         </Card>

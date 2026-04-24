@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { Badge, Button, Card, ErrorNote, Field, Input, Money, Select, Spinner } from '../components/ui';
 import { api, ApiError } from '../lib/api';
+import { formatCreditReason } from '../lib/formatters';
 
 const searchSchema = z.object({
   customer_id: z.string().uuid().optional(),
@@ -164,10 +165,11 @@ function NewOrder() {
               <div className="mb-1 text-xs uppercase tracking-wide text-slate-500">
                 Credit engine
               </div>
-              <ul className="space-y-0.5 text-slate-300">
+              <ul className="space-y-1 text-sm text-slate-200">
                 {result.credit.reasons.map((r) => (
-                  <li key={r} className="font-mono text-xs">
-                    · {r}
+                  <li key={r} className="flex items-start gap-2">
+                    <span className="mt-0.5 text-amber-400">•</span>
+                    <span>{formatCreditReason(r)}</span>
                   </li>
                 ))}
               </ul>
