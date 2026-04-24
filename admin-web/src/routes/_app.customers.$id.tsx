@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { Badge, Button, Card, ErrorNote, Money, Select, Spinner, Tile } from '../components/ui';
+import { Badge, Button, Card, ErrorNote, Field, Input, Money, Select, Spinner, Tile } from '../components/ui';
 import { api, ApiError } from '../lib/api';
 
 export const Route = createFileRoute('/_app/customers/$id')({
@@ -22,6 +22,8 @@ interface Customer360 {
     risk_score: string;
     payment_term_code: string | null;
     price_list_id: string | null;
+    hold_reason: string | null;
+    hold_until: string | null;
   };
   aging: Record<string, string>;
   open_invoices: Array<{
@@ -67,6 +69,15 @@ function CustomerDetail() {
   const [editPriceList, setEditPriceList] = useState(false);
   const [pickedList, setPickedList] = useState<string>('');
   const [actionError, setActionError] = useState<string | null>(null);
+  // Hold / activate / credit limit
+  const [showHold, setShowHold] = useState(false);
+  const [holdReason, setHoldReason] = useState('');
+  const [holdUntil, setHoldUntil] = useState('');
+  const [showActivate, setShowActivate] = useState(false);
+  const [activateReason, setActivateReason] = useState('');
+  const [showCredit, setShowCredit] = useState(false);
+  const [creditLimit, setCreditLimit] = useState('');
+  const [creditReason, setCreditReason] = useState('');
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['customer360', id],
@@ -89,6 +100,47 @@ function CustomerDetail() {
     },
     onError: (e) =>
       setActionError(e instanceof ApiError ? e.message : 'Could not update price list'),
+  });
+
+  const holdM = useMutation({
+    mutationFn: (body: { reason: string; until?: string }) =>
+      api.post(`/customers/${id}/hold`, body),
+    onSuccess: () => {
+      setActionError(null);
+      setShowHold(false);
+      setHoldReason('');
+      setHoldUntil('');
+      qc.invalidateQueries({ queryKey: ['customer360', id] });
+      qc.invalidateQueries({ queryKey: ['customers'] });
+    },
+    onError: (e) => setActionError(e instanceof ApiError ? e.message : 'Hold failed'),
+  });
+
+  const activateM = useMutation({
+    mutationFn: (body: { reason: string }) =>
+      api.post(`/customers/${id}/activate`, body),
+    onSuccess: () => {
+      setActionError(null);
+      setShowActivate(false);
+      setActivateReason('');
+      qc.invalidateQueries({ queryKey: ['customer360', id] });
+      qc.invalidateQueries({ queryKey: ['customers'] });
+    },
+    onError: (e) => setActionError(e instanceof ApiError ? e.message : 'Activate failed'),
+  });
+
+  const creditM = useMutation({
+    mutationFn: (body: { credit_limit: number; reason: string }) =>
+      api.patch(`/customers/${id}/credit`, body),
+    onSuccess: () => {
+      setActionError(null);
+      setShowCredit(false);
+      setCreditLimit('');
+      setCreditReason('');
+      qc.invalidateQueries({ queryKey: ['customer360', id] });
+      qc.invalidateQueries({ queryKey: ['customers'] });
+    },
+    onError: (e) => setActionError(e instanceof ApiError ? e.message : 'Credit update failed'),
   });
 
   if (isLoading) return <Spinner label="Loading customer" />;
@@ -159,6 +211,137 @@ function CustomerDetail() {
       </div>
 
       {actionError && <ErrorNote message={actionError} />}
+
+      <Card title="Controls">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {c.status !== 'hold' && c.status !== 'blocked' && (
+              <Button onClick={() => setShowHold((v) => !v)}>
+                {showHold ? 'Close' : 'Hold'}
+              </Button>
+            )}
+            {(c.status === 'hold' || c.status === 'blocked' || c.status === 'dispute') && (
+              <Button onClick={() => setShowActivate((v) => !v)}>
+                {showActivate ? 'Close' : 'Activate'}
+              </Button>
+            )}
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setCreditLimit(String(Number(c.credit_limit) || ''));
+                setShowCredit((v) => !v);
+              }}
+            >
+              {showCredit ? 'Close' : 'Edit credit limit'}
+            </Button>
+            {c.hold_reason && c.status === 'hold' && (
+              <span className="text-xs text-slate-600">
+                On hold: <span className="text-slate-800">{c.hold_reason}</span>
+                {c.hold_until && <span> · until {c.hold_until.slice(0, 10)}</span>}
+              </span>
+            )}
+          </div>
+
+          {showHold && (
+            <form
+              className="flex flex-wrap items-end gap-3 rounded-lg bg-slate-50 p-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                holdM.mutate({
+                  reason: holdReason,
+                  ...(holdUntil ? { until: holdUntil } : {}),
+                });
+              }}
+            >
+              <div className="min-w-64 flex-1">
+                <Field label="Reason">
+                  <Input
+                    required
+                    value={holdReason}
+                    onChange={(e) => setHoldReason(e.target.value)}
+                    placeholder="e.g. payment dispute, failed delivery"
+                  />
+                </Field>
+              </div>
+              <div className="w-44">
+                <Field label="Until" optional>
+                  <Input
+                    type="date"
+                    value={holdUntil}
+                    onChange={(e) => setHoldUntil(e.target.value)}
+                  />
+                </Field>
+              </div>
+              <Button type="submit" disabled={holdM.isPending}>
+                {holdM.isPending ? 'Saving…' : 'Put on hold'}
+              </Button>
+            </form>
+          )}
+
+          {showActivate && (
+            <form
+              className="flex flex-wrap items-end gap-3 rounded-lg bg-slate-50 p-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                activateM.mutate({ reason: activateReason });
+              }}
+            >
+              <div className="min-w-64 flex-1">
+                <Field label="Reason">
+                  <Input
+                    required
+                    value={activateReason}
+                    onChange={(e) => setActivateReason(e.target.value)}
+                    placeholder="e.g. payment resolved, dispute closed"
+                  />
+                </Field>
+              </div>
+              <Button type="submit" disabled={activateM.isPending}>
+                {activateM.isPending ? 'Saving…' : 'Activate'}
+              </Button>
+            </form>
+          )}
+
+          {showCredit && (
+            <form
+              className="flex flex-wrap items-end gap-3 rounded-lg bg-slate-50 p-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                creditM.mutate({
+                  credit_limit: Number(creditLimit) || 0,
+                  reason: creditReason,
+                });
+              }}
+            >
+              <div className="w-40">
+                <Field label="New limit" hint="PKR">
+                  <Input
+                    required
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={creditLimit}
+                    onChange={(e) => setCreditLimit(e.target.value)}
+                  />
+                </Field>
+              </div>
+              <div className="min-w-64 flex-1">
+                <Field label="Reason">
+                  <Input
+                    required
+                    value={creditReason}
+                    onChange={(e) => setCreditReason(e.target.value)}
+                    placeholder="e.g. increased after 3 months good standing"
+                  />
+                </Field>
+              </div>
+              <Button type="submit" disabled={creditM.isPending}>
+                {creditM.isPending ? 'Saving…' : 'Update'}
+              </Button>
+            </form>
+          )}
+        </div>
+      </Card>
 
       <Card title="Pricing">
         {!editPriceList ? (

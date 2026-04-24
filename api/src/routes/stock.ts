@@ -48,6 +48,11 @@ const PickQuery = z.object({
   qty: z.coerce.number().int().positive(),
 });
 
+const BatchesQuery = z.object({
+  warehouse_id: z.string().uuid(),
+  product_id: z.string().uuid(),
+});
+
 // ---------- Routes ----------
 
 export default async function stockRoutes(app: FastifyInstance) {
@@ -57,6 +62,32 @@ export default async function stockRoutes(app: FastifyInstance) {
     if (!parsed.success) throw badRequest('Invalid query', parsed.error.flatten());
     const rows = await getStockState(req.user.org_id, parsed.data);
     return { items: rows };
+  });
+
+  // LIST batches at a warehouse for a product (for adjustment UI)
+  app.get('/stock/batches', { preHandler: [rbacGuard('stock', 'read')] }, async (req) => {
+    const parsed = BatchesQuery.safeParse(req.query);
+    if (!parsed.success) throw badRequest('Invalid query', parsed.error.flatten());
+    const { warehouse_id, product_id } = parsed.data;
+    const orgId = req.user.org_id;
+    const items = await sql`
+      SELECT id,
+             batch_no                                          AS lot_code,
+             expiry_date,
+             mfg_date,
+             qty_physical::text                                AS qty_physical,
+             qty_reserved::text                                AS qty_reserved,
+             qty_damaged::text                                 AS qty_damaged,
+             (qty_physical - qty_reserved - qty_damaged)::text AS qty_sellable,
+             cost_price::text                                  AS cost_price
+      FROM stock_batches
+      WHERE org_id = ${orgId}
+        AND warehouse_id = ${warehouse_id}
+        AND product_id = ${product_id}
+        AND qty_physical > 0
+      ORDER BY COALESCE(expiry_date, 'infinity'::date) ASC, created_at ASC
+    `;
+    return { items };
   });
 
   // FEFO pick preview (dry run — does not reserve)

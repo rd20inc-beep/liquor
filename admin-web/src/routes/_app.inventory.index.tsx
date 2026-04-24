@@ -97,9 +97,17 @@ function InventoryDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">Inventory</h1>
-        <Link to="/inventory/receipt">
-          <Button>+ New receipt</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/inventory/transfer">
+            <Button variant="secondary">Transfer</Button>
+          </Link>
+          <Link to="/inventory/adjust">
+            <Button variant="secondary">Adjust</Button>
+          </Link>
+          <Link to="/inventory/receipt">
+            <Button>+ New receipt</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Summary */}

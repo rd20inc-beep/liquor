@@ -19,6 +19,7 @@ const NAV = [
   { to: '/invoices', label: 'Invoices' },
   { to: '/payments', label: 'Payments' },
   { to: '/approvals', label: 'Approvals' },
+  { to: '/audit', label: 'Audit log' },
 ] as const;
 
 function AppShell() {

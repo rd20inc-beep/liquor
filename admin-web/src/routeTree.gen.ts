@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppAuditRouteImport } from './routes/_app.audit'
 import { Route as AppApprovalsRouteImport } from './routes/_app.approvals'
 import { Route as AppProductsIndexRouteImport } from './routes/_app.products.index'
 import { Route as AppPriceListsIndexRouteImport } from './routes/_app.price-lists.index'
@@ -28,7 +29,9 @@ import { Route as AppPaymentsIdRouteImport } from './routes/_app.payments.$id'
 import { Route as AppOrdersNewRouteImport } from './routes/_app.orders.new'
 import { Route as AppOrdersIdRouteImport } from './routes/_app.orders.$id'
 import { Route as AppInvoicesIdRouteImport } from './routes/_app.invoices.$id'
+import { Route as AppInventoryTransferRouteImport } from './routes/_app.inventory.transfer'
 import { Route as AppInventoryReceiptRouteImport } from './routes/_app.inventory.receipt'
+import { Route as AppInventoryAdjustRouteImport } from './routes/_app.inventory.adjust'
 import { Route as AppCustomersNewRouteImport } from './routes/_app.customers.new'
 import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
 
@@ -44,6 +47,11 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAuditRoute = AppAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AppRoute,
 } as any)
 const AppApprovalsRoute = AppApprovalsRouteImport.update({
@@ -126,9 +134,19 @@ const AppInvoicesIdRoute = AppInvoicesIdRouteImport.update({
   path: '/invoices/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInventoryTransferRoute = AppInventoryTransferRouteImport.update({
+  id: '/inventory/transfer',
+  path: '/inventory/transfer',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppInventoryReceiptRoute = AppInventoryReceiptRouteImport.update({
   id: '/inventory/receipt',
   path: '/inventory/receipt',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInventoryAdjustRoute = AppInventoryAdjustRouteImport.update({
+  id: '/inventory/adjust',
+  path: '/inventory/adjust',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCustomersNewRoute = AppCustomersNewRouteImport.update({
@@ -146,9 +164,12 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/approvals': typeof AppApprovalsRoute
+  '/audit': typeof AppAuditRoute
   '/customers/$id': typeof AppCustomersIdRoute
   '/customers/new': typeof AppCustomersNewRoute
+  '/inventory/adjust': typeof AppInventoryAdjustRoute
   '/inventory/receipt': typeof AppInventoryReceiptRoute
+  '/inventory/transfer': typeof AppInventoryTransferRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
   '/orders/$id': typeof AppOrdersIdRoute
   '/orders/new': typeof AppOrdersNewRoute
@@ -168,10 +189,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/approvals': typeof AppApprovalsRoute
+  '/audit': typeof AppAuditRoute
   '/': typeof AppIndexRoute
   '/customers/$id': typeof AppCustomersIdRoute
   '/customers/new': typeof AppCustomersNewRoute
+  '/inventory/adjust': typeof AppInventoryAdjustRoute
   '/inventory/receipt': typeof AppInventoryReceiptRoute
+  '/inventory/transfer': typeof AppInventoryTransferRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
   '/orders/$id': typeof AppOrdersIdRoute
   '/orders/new': typeof AppOrdersNewRoute
@@ -193,10 +217,13 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/approvals': typeof AppApprovalsRoute
+  '/_app/audit': typeof AppAuditRoute
   '/_app/': typeof AppIndexRoute
   '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/customers/new': typeof AppCustomersNewRoute
+  '/_app/inventory/adjust': typeof AppInventoryAdjustRoute
   '/_app/inventory/receipt': typeof AppInventoryReceiptRoute
+  '/_app/inventory/transfer': typeof AppInventoryTransferRoute
   '/_app/invoices/$id': typeof AppInvoicesIdRoute
   '/_app/orders/$id': typeof AppOrdersIdRoute
   '/_app/orders/new': typeof AppOrdersNewRoute
@@ -219,9 +246,12 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/approvals'
+    | '/audit'
     | '/customers/$id'
     | '/customers/new'
+    | '/inventory/adjust'
     | '/inventory/receipt'
+    | '/inventory/transfer'
     | '/invoices/$id'
     | '/orders/$id'
     | '/orders/new'
@@ -241,10 +271,13 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/approvals'
+    | '/audit'
     | '/'
     | '/customers/$id'
     | '/customers/new'
+    | '/inventory/adjust'
     | '/inventory/receipt'
+    | '/inventory/transfer'
     | '/invoices/$id'
     | '/orders/$id'
     | '/orders/new'
@@ -265,10 +298,13 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/approvals'
+    | '/_app/audit'
     | '/_app/'
     | '/_app/customers/$id'
     | '/_app/customers/new'
+    | '/_app/inventory/adjust'
     | '/_app/inventory/receipt'
+    | '/_app/inventory/transfer'
     | '/_app/invoices/$id'
     | '/_app/orders/$id'
     | '/_app/orders/new'
@@ -312,6 +348,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/audit': {
+      id: '/_app/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AppAuditRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/approvals': {
@@ -426,11 +469,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInvoicesIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/inventory/transfer': {
+      id: '/_app/inventory/transfer'
+      path: '/inventory/transfer'
+      fullPath: '/inventory/transfer'
+      preLoaderRoute: typeof AppInventoryTransferRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/inventory/receipt': {
       id: '/_app/inventory/receipt'
       path: '/inventory/receipt'
       fullPath: '/inventory/receipt'
       preLoaderRoute: typeof AppInventoryReceiptRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/inventory/adjust': {
+      id: '/_app/inventory/adjust'
+      path: '/inventory/adjust'
+      fullPath: '/inventory/adjust'
+      preLoaderRoute: typeof AppInventoryAdjustRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/customers/new': {
@@ -452,10 +509,13 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppApprovalsRoute: typeof AppApprovalsRoute
+  AppAuditRoute: typeof AppAuditRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCustomersIdRoute: typeof AppCustomersIdRoute
   AppCustomersNewRoute: typeof AppCustomersNewRoute
+  AppInventoryAdjustRoute: typeof AppInventoryAdjustRoute
   AppInventoryReceiptRoute: typeof AppInventoryReceiptRoute
+  AppInventoryTransferRoute: typeof AppInventoryTransferRoute
   AppInvoicesIdRoute: typeof AppInvoicesIdRoute
   AppOrdersIdRoute: typeof AppOrdersIdRoute
   AppOrdersNewRoute: typeof AppOrdersNewRoute
@@ -475,10 +535,13 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppApprovalsRoute: AppApprovalsRoute,
+  AppAuditRoute: AppAuditRoute,
   AppIndexRoute: AppIndexRoute,
   AppCustomersIdRoute: AppCustomersIdRoute,
   AppCustomersNewRoute: AppCustomersNewRoute,
+  AppInventoryAdjustRoute: AppInventoryAdjustRoute,
   AppInventoryReceiptRoute: AppInventoryReceiptRoute,
+  AppInventoryTransferRoute: AppInventoryTransferRoute,
   AppInvoicesIdRoute: AppInvoicesIdRoute,
   AppOrdersIdRoute: AppOrdersIdRoute,
   AppOrdersNewRoute: AppOrdersNewRoute,

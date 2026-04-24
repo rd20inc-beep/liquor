@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Liquor OS deploy — rsync this repo to /opt/liquor-os on the target host,
+# Liquor OS deploy — rsync this repo to /home/liquor/liquor-os on the target host,
 # then build + boot the compose stack. Idempotent; safe to re-run.
 #
 # Usage:
@@ -10,7 +10,7 @@
 set -euo pipefail
 
 TARGET="${TARGET:?set TARGET=user@host}"
-REMOTE_DIR="${REMOTE_DIR:-/opt/liquor-os}"
+REMOTE_DIR="${REMOTE_DIR:-/home/liquor/liquor-os}"
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "→ syncing $REPO_DIR → $TARGET:$REMOTE_DIR"
