@@ -126,6 +126,10 @@ function OrderDetail() {
 
   const [overrideCode, setOverrideCode] = useState('management_override');
   const [overrideNote, setOverrideNote] = useState('');
+  // Per-line price overrides: keyed on line_id → draft { unit_price, discount_pct } strings
+  const [lineDrafts, setLineDrafts] = useState<
+    Record<string, { unit_price: string; discount_pct: string }>
+  >({});
   const [invoiceWarehouse, setInvoiceWarehouse] = useState('');
   const [cancelReason, setCancelReason] = useState('');
 
@@ -160,10 +164,14 @@ function OrderDetail() {
   });
 
   const override = useMutation({
-    mutationFn: (body: { reason_code: string; note: string }) =>
-      api.post(`/orders/${id}/override`, body),
+    mutationFn: (body: {
+      reason_code: string;
+      note: string;
+      line_adjustments?: Array<{ line_id: string; unit_price?: number; discount_pct?: number }>;
+    }) => api.post(`/orders/${id}/override`, body),
     onSuccess: () => {
       setShowOverride(false);
+      setLineDrafts({});
       setActionError(null);
       qc.invalidateQueries({ queryKey: ['order', id] });
       qc.invalidateQueries({ queryKey: ['orders'] });
@@ -475,40 +483,151 @@ function OrderDetail() {
       {showOverride && (
         <Card title="Admin override — approve held order">
           <form
-            className="space-y-3"
+            className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
-              override.mutate({ reason_code: overrideCode, note: overrideNote });
+              // Build line_adjustments only for lines the admin actually changed
+              const adjustments: Array<{
+                line_id: string;
+                unit_price?: number;
+                discount_pct?: number;
+              }> = [];
+              for (const line of o.lines) {
+                const draft = lineDrafts[line.id];
+                if (!draft) continue;
+                const up = draft.unit_price.trim();
+                const dp = draft.discount_pct.trim();
+                const patch: {
+                  line_id: string;
+                  unit_price?: number;
+                  discount_pct?: number;
+                } = { line_id: line.id };
+                let dirty = false;
+                if (up !== '' && Number(up) !== Number(line.unit_price)) {
+                  patch.unit_price = Number(up);
+                  dirty = true;
+                }
+                if (dp !== '' && Number(dp) !== Number(line.discount_pct)) {
+                  patch.discount_pct = Number(dp);
+                  dirty = true;
+                }
+                if (dirty) adjustments.push(patch);
+              }
+              override.mutate({
+                reason_code: overrideCode,
+                note: overrideNote,
+                ...(adjustments.length > 0 ? { line_adjustments: adjustments } : {}),
+              });
             }}
           >
-            <Field
-              label="Reason code"
-              hint="Short tag — e.g. management_override, one_time_exception"
-            >
-              <Input
-                required
-                maxLength={50}
-                value={overrideCode}
-                onChange={(e) => setOverrideCode(e.target.value)}
-              />
-            </Field>
-            <Field label="Note" hint="Why the credit decision is being overridden">
-              <Input
-                required
-                value={overrideNote}
-                onChange={(e) => setOverrideNote(e.target.value)}
-              />
-            </Field>
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowOverride(false)}
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Field
+                label="Reason code"
+                hint="e.g. management_override, special_rate, one_time_exception"
               >
+                <Input
+                  required
+                  maxLength={50}
+                  value={overrideCode}
+                  onChange={(e) => setOverrideCode(e.target.value)}
+                />
+              </Field>
+              <Field label="Note" hint="Why the credit decision is being overridden">
+                <Input
+                  required
+                  value={overrideNote}
+                  onChange={(e) => setOverrideNote(e.target.value)}
+                />
+              </Field>
+            </div>
+
+            {/* Per-line price adjustments */}
+            <div>
+              <div className="mb-2 text-xs uppercase tracking-wide text-slate-400">
+                Optional — adjust per-line prices
+              </div>
+              <p className="mb-2 text-xs text-slate-500">
+                Leave blank to keep current prices. Changes recompute totals server-side and
+                are recorded in the audit log.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-xs uppercase text-slate-500">
+                    <tr>
+                      <th className="py-1 text-left">Product</th>
+                      <th className="text-right">Qty</th>
+                      <th className="text-right">Current unit</th>
+                      <th className="text-right">New unit</th>
+                      <th className="text-right">Current disc %</th>
+                      <th className="text-right">New disc %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {o.lines.map((line) => {
+                      const draft = lineDrafts[line.id] ?? { unit_price: '', discount_pct: '' };
+                      return (
+                        <tr key={line.id} className="border-t border-slate-800/60">
+                          <td className="py-1.5 text-slate-200">{line.product_name}</td>
+                          <td className="text-right text-slate-300">{line.qty}</td>
+                          <td className="text-right text-slate-400">
+                            <Money value={line.unit_price} />
+                          </td>
+                          <td className="text-right">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="—"
+                              className="w-28 text-right"
+                              value={draft.unit_price}
+                              onChange={(e) =>
+                                setLineDrafts({
+                                  ...lineDrafts,
+                                  [line.id]: {
+                                    ...draft,
+                                    unit_price: e.target.value,
+                                  },
+                                })
+                              }
+                            />
+                          </td>
+                          <td className="text-right text-slate-400">
+                            {Number(line.discount_pct)}
+                          </td>
+                          <td className="text-right">
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="100"
+                              placeholder="—"
+                              className="w-20 text-right"
+                              value={draft.discount_pct}
+                              onChange={(e) =>
+                                setLineDrafts({
+                                  ...lineDrafts,
+                                  [line.id]: {
+                                    ...draft,
+                                    discount_pct: e.target.value,
+                                  },
+                                })
+                              }
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setShowOverride(false)}>
                 Close
               </Button>
               <Button type="submit" disabled={override.isPending}>
-                {override.isPending ? 'Approving…' : 'Approve + reserve stock'}
+                {override.isPending ? 'Approving…' : 'Approve'}
               </Button>
             </div>
           </form>

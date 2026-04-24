@@ -40,6 +40,19 @@ const CreateOrderBody = z.object({
 const OverrideBody = z.object({
   reason_code: z.string().min(1).max(50),
   note: z.string().min(1),
+  /**
+   * Optional per-line price adjustments applied atomically before approving.
+   * Useful when admin negotiates a special rate as part of the override.
+   */
+  line_adjustments: z
+    .array(
+      z.object({
+        line_id: z.string().uuid(),
+        unit_price: z.number().positive().optional(),
+        discount_pct: z.number().min(0).max(100).optional(),
+      }),
+    )
+    .optional(),
 });
 
 const CancelBody = z.object({
@@ -362,6 +375,62 @@ export default async function orderRoutes(app: FastifyInstance) {
           throw conflict('Cannot override order for blocked customer — change status first');
         }
 
+        // Apply optional per-line price adjustments, capture before/after for audit
+        const adjustmentsAudit: Array<Record<string, unknown>> = [];
+        if (body.data.line_adjustments && body.data.line_adjustments.length > 0) {
+          for (const adj of body.data.line_adjustments) {
+            const [line] = await tx<Array<{
+              id: string; order_id: string; qty: number;
+              unit_price: string; discount_pct: string; tax_rate: string; line_total: string;
+            }>>`
+              SELECT id, order_id, qty, unit_price, discount_pct, tax_rate, line_total
+              FROM sales_order_lines
+              WHERE id = ${adj.line_id}
+              FOR UPDATE
+            `;
+            if (!line) throw badRequest(`Line ${adj.line_id} not found`);
+            if (line.order_id !== id) throw badRequest(`Line ${adj.line_id} belongs to a different order`);
+
+            const newUnit = adj.unit_price ?? Number(line.unit_price);
+            const newDiscount = adj.discount_pct ?? Number(line.discount_pct);
+            const taxRate = Number(line.tax_rate);
+            const gross = newUnit * line.qty;
+            const afterDiscount = gross * (1 - newDiscount / 100);
+            const tax = afterDiscount * (taxRate / 100);
+            const newLineTotal = Math.round((afterDiscount + tax) * 100) / 100;
+
+            await tx`
+              UPDATE sales_order_lines
+              SET unit_price = ${newUnit},
+                  discount_pct = ${newDiscount},
+                  line_total = ${newLineTotal}
+              WHERE id = ${line.id}
+            `;
+            adjustmentsAudit.push({
+              line_id: line.id,
+              before: { unit_price: Number(line.unit_price), discount_pct: Number(line.discount_pct), line_total: Number(line.line_total) },
+              after:  { unit_price: newUnit, discount_pct: newDiscount, line_total: newLineTotal },
+            });
+          }
+
+          // Recompute order totals from the updated lines
+          const [totals] = await tx<Array<{ subtotal: string; tax_total: string; total: string }>>`
+            SELECT
+              COALESCE(SUM( qty * unit_price * (1 - discount_pct/100)             ), 0)::numeric(14,2) AS subtotal,
+              COALESCE(SUM( qty * unit_price * (1 - discount_pct/100) * tax_rate/100 ), 0)::numeric(14,2) AS tax_total,
+              COALESCE(SUM(line_total), 0)::numeric(14,2) AS total
+            FROM sales_order_lines
+            WHERE order_id = ${id}
+          `;
+          await tx`
+            UPDATE sales_orders
+            SET subtotal  = ${totals!.subtotal},
+                tax_total = ${totals!.tax_total},
+                total     = ${totals!.total}
+            WHERE id = ${id}
+          `;
+        }
+
         const [appr] = await tx`
           INSERT INTO approval_requests (
             org_id, type, ref_type, ref_id, requested_by, approver_id,
@@ -397,8 +466,13 @@ export default async function orderRoutes(app: FastifyInstance) {
             action: 'override',
             entity: 'sales_order',
             entityId: id,
-            before: { status: order.status, credit_decision: order.credit_decision },
-            after: { status: 'approved', reason_code: body.data.reason_code, note: body.data.note },
+            before: { status: order.status, credit_decision: order.credit_decision, total: Number(order.total) },
+            after: {
+              status: 'approved',
+              reason_code: body.data.reason_code,
+              note: body.data.note,
+              ...(adjustmentsAudit.length > 0 ? { line_adjustments: adjustmentsAudit } : {}),
+            },
           },
           tx,
         );
