@@ -13,6 +13,7 @@ const NAV = [
   { to: '/', label: 'Dashboard' },
   { to: '/customers', label: 'Customers' },
   { to: '/products', label: 'Products' },
+  { to: '/price-lists', label: 'Price lists' },
   { to: '/inventory', label: 'Inventory' },
   { to: '/orders', label: 'Orders' },
   { to: '/invoices', label: 'Invoices' },

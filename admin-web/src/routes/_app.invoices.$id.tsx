@@ -321,8 +321,11 @@ function InvoiceDetail() {
       )}
 
       {canRaiseCN && (
-        <div>
-          <Button onClick={() => setShowCN((v) => !v)}>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/payments/new" search={{ customer_id: inv.customer_id }}>
+            <Button>Record payment</Button>
+          </Link>
+          <Button variant="secondary" onClick={() => setShowCN((v) => !v)}>
             {showCN ? 'Close' : 'Raise credit note'}
           </Button>
         </div>

@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { Badge, Button, Card, Money, Spinner, Tile } from '../components/ui';
-import { api } from '../lib/api';
+import { useState } from 'react';
+import { Badge, Button, Card, ErrorNote, Money, Select, Spinner, Tile } from '../components/ui';
+import { api, ApiError } from '../lib/api';
 
 export const Route = createFileRoute('/_app/customers/$id')({
   component: CustomerDetail,
@@ -20,6 +21,7 @@ interface Customer360 {
     available_credit: string;
     risk_score: string;
     payment_term_code: string | null;
+    price_list_id: string | null;
   };
   aging: Record<string, string>;
   open_invoices: Array<{
@@ -61,9 +63,32 @@ interface Customer360 {
 
 function CustomerDetail() {
   const { id } = Route.useParams();
+  const qc = useQueryClient();
+  const [editPriceList, setEditPriceList] = useState(false);
+  const [pickedList, setPickedList] = useState<string>('');
+  const [actionError, setActionError] = useState<string | null>(null);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['customer360', id],
     queryFn: () => api.get<Customer360>(`/customers/${id}/360`),
+  });
+
+  const listsQ = useQuery({
+    queryKey: ['masters', 'price-lists'],
+    queryFn: () => api.get<{ items: Array<{ id: string; name: string; is_default: boolean }> }>('/price-lists'),
+    enabled: editPriceList,
+  });
+
+  const setList = useMutation({
+    mutationFn: (value: string | null) =>
+      api.patch(`/customers/${id}`, { price_list_id: value }),
+    onSuccess: () => {
+      setActionError(null);
+      setEditPriceList(false);
+      qc.invalidateQueries({ queryKey: ['customer360', id] });
+    },
+    onError: (e) =>
+      setActionError(e instanceof ApiError ? e.message : 'Could not update price list'),
   });
 
   if (isLoading) return <Spinner label="Loading customer" />;
@@ -71,6 +96,7 @@ function CustomerDetail() {
     return <div className="text-sm text-red-400">Customer not found.</div>;
 
   const c = data.customer;
+  const currentList = listsQ.data?.items.find((l) => l.id === c.price_list_id);
 
   return (
     <div className="space-y-6">
@@ -131,6 +157,70 @@ function CustomerDetail() {
           }
         />
       </div>
+
+      {actionError && <ErrorNote message={actionError} />}
+
+      <Card title="Pricing">
+        {!editPriceList ? (
+          <div className="flex items-center justify-between text-sm">
+            <div>
+              <span className="text-slate-400">Price list: </span>
+              {c.price_list_id ? (
+                <Link
+                  to="/price-lists/$id"
+                  params={{ id: c.price_list_id }}
+                  className="text-blue-400 underline-offset-2 hover:underline"
+                >
+                  {currentList?.name ?? c.price_list_id.slice(0, 8) + '…'}
+                </Link>
+              ) : (
+                <span className="text-slate-200">default (org-wide)</span>
+              )}
+            </div>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setPickedList(c.price_list_id ?? '');
+                setEditPriceList(true);
+              }}
+            >
+              Change
+            </Button>
+          </div>
+        ) : (
+          <form
+            className="flex flex-wrap items-end gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setList.mutate(pickedList || null);
+            }}
+          >
+            <div className="min-w-64 flex-1">
+              <span className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+                Price list
+              </span>
+              <Select
+                value={pickedList}
+                onChange={(e) => setPickedList(e.target.value)}
+              >
+                <option value="">— use default —</option>
+                {listsQ.data?.items.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                    {l.is_default ? ' (default)' : ''}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Button type="submit" disabled={setList.isPending}>
+              {setList.isPending ? 'Saving…' : 'Save'}
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => setEditPriceList(false)}>
+              Cancel
+            </Button>
+          </form>
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card title="Open invoices">

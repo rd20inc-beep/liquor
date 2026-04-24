@@ -18,6 +18,11 @@ interface PaymentTerm {
   type: string;
   days: number;
 }
+interface PriceList {
+  id: string;
+  name: string;
+  is_default: boolean;
+}
 
 interface CreateBody {
   code: string;
@@ -28,6 +33,7 @@ interface CreateBody {
   credit_limit: number;
   route_id?: string;
   payment_term_id?: string;
+  price_list_id?: string;
   high_value: boolean;
 }
 
@@ -42,6 +48,7 @@ function NewCustomer() {
     credit_limit: '0',
     route_id: '',
     payment_term_id: '',
+    price_list_id: '',
     high_value: false,
   });
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +60,10 @@ function NewCustomer() {
   const termsQ = useQuery({
     queryKey: ['masters', 'payment-terms'],
     queryFn: () => api.get<{ items: PaymentTerm[] }>('/payment-terms'),
+  });
+  const listsQ = useQuery({
+    queryKey: ['masters', 'price-lists'],
+    queryFn: () => api.get<{ items: PriceList[] }>('/price-lists'),
   });
 
   const create = useMutation({
@@ -79,6 +90,7 @@ function NewCustomer() {
     if (form.address.trim()) body.address = form.address.trim();
     if (form.route_id) body.route_id = form.route_id;
     if (form.payment_term_id) body.payment_term_id = form.payment_term_id;
+    if (form.price_list_id) body.price_list_id = form.price_list_id;
     create.mutate(body);
   };
 
@@ -179,6 +191,25 @@ function NewCustomer() {
               {termsQ.data?.items.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.code} ({t.type}, {t.days}d)
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          <Field
+            label="Price list"
+            optional
+            hint="Overrides the default list — e.g. Customer A pays 800, B pays 900"
+          >
+            <Select
+              value={form.price_list_id}
+              onChange={(e) => setForm({ ...form, price_list_id: e.target.value })}
+            >
+              <option value="">— use default —</option>
+              {listsQ.data?.items.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                  {l.is_default ? ' (default)' : ''}
                 </option>
               ))}
             </Select>

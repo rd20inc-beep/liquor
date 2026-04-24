@@ -457,6 +457,14 @@ function OrderDetail() {
             {showInvoice ? 'Close' : 'Post invoice'}
           </Button>
         )}
+        {o.status === 'invoiced' && tiedInvoice && Number(tiedInvoice.outstanding) > 0 && (
+          <Link
+            to="/payments/new"
+            search={{ customer_id: o.customer_id }}
+          >
+            <Button>Record payment</Button>
+          </Link>
+        )}
         {canCancel && (
           <Button variant="danger" onClick={() => setShowCancel((v) => !v)}>
             {showCancel ? 'Close' : 'Cancel order'}

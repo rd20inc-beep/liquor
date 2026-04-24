@@ -14,12 +14,15 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppApprovalsRouteImport } from './routes/_app.approvals'
 import { Route as AppProductsIndexRouteImport } from './routes/_app.products.index'
+import { Route as AppPriceListsIndexRouteImport } from './routes/_app.price-lists.index'
 import { Route as AppPaymentsIndexRouteImport } from './routes/_app.payments.index'
 import { Route as AppOrdersIndexRouteImport } from './routes/_app.orders.index'
 import { Route as AppInvoicesIndexRouteImport } from './routes/_app.invoices.index'
 import { Route as AppInventoryIndexRouteImport } from './routes/_app.inventory.index'
 import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
 import { Route as AppProductsNewRouteImport } from './routes/_app.products.new'
+import { Route as AppPriceListsNewRouteImport } from './routes/_app.price-lists.new'
+import { Route as AppPriceListsIdRouteImport } from './routes/_app.price-lists.$id'
 import { Route as AppPaymentsNewRouteImport } from './routes/_app.payments.new'
 import { Route as AppPaymentsIdRouteImport } from './routes/_app.payments.$id'
 import { Route as AppOrdersNewRouteImport } from './routes/_app.orders.new'
@@ -53,6 +56,11 @@ const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
   path: '/products/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPriceListsIndexRoute = AppPriceListsIndexRouteImport.update({
+  id: '/price-lists/',
+  path: '/price-lists/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPaymentsIndexRoute = AppPaymentsIndexRouteImport.update({
   id: '/payments/',
   path: '/payments/',
@@ -81,6 +89,16 @@ const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
 const AppProductsNewRoute = AppProductsNewRouteImport.update({
   id: '/products/new',
   path: '/products/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPriceListsNewRoute = AppPriceListsNewRouteImport.update({
+  id: '/price-lists/new',
+  path: '/price-lists/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPriceListsIdRoute = AppPriceListsIdRouteImport.update({
+  id: '/price-lists/$id',
+  path: '/price-lists/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPaymentsNewRoute = AppPaymentsNewRouteImport.update({
@@ -136,12 +154,15 @@ export interface FileRoutesByFullPath {
   '/orders/new': typeof AppOrdersNewRoute
   '/payments/$id': typeof AppPaymentsIdRoute
   '/payments/new': typeof AppPaymentsNewRoute
+  '/price-lists/$id': typeof AppPriceListsIdRoute
+  '/price-lists/new': typeof AppPriceListsNewRoute
   '/products/new': typeof AppProductsNewRoute
   '/customers/': typeof AppCustomersIndexRoute
   '/inventory/': typeof AppInventoryIndexRoute
   '/invoices/': typeof AppInvoicesIndexRoute
   '/orders/': typeof AppOrdersIndexRoute
   '/payments/': typeof AppPaymentsIndexRoute
+  '/price-lists/': typeof AppPriceListsIndexRoute
   '/products/': typeof AppProductsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -156,12 +177,15 @@ export interface FileRoutesByTo {
   '/orders/new': typeof AppOrdersNewRoute
   '/payments/$id': typeof AppPaymentsIdRoute
   '/payments/new': typeof AppPaymentsNewRoute
+  '/price-lists/$id': typeof AppPriceListsIdRoute
+  '/price-lists/new': typeof AppPriceListsNewRoute
   '/products/new': typeof AppProductsNewRoute
   '/customers': typeof AppCustomersIndexRoute
   '/inventory': typeof AppInventoryIndexRoute
   '/invoices': typeof AppInvoicesIndexRoute
   '/orders': typeof AppOrdersIndexRoute
   '/payments': typeof AppPaymentsIndexRoute
+  '/price-lists': typeof AppPriceListsIndexRoute
   '/products': typeof AppProductsIndexRoute
 }
 export interface FileRoutesById {
@@ -178,12 +202,15 @@ export interface FileRoutesById {
   '/_app/orders/new': typeof AppOrdersNewRoute
   '/_app/payments/$id': typeof AppPaymentsIdRoute
   '/_app/payments/new': typeof AppPaymentsNewRoute
+  '/_app/price-lists/$id': typeof AppPriceListsIdRoute
+  '/_app/price-lists/new': typeof AppPriceListsNewRoute
   '/_app/products/new': typeof AppProductsNewRoute
   '/_app/customers/': typeof AppCustomersIndexRoute
   '/_app/inventory/': typeof AppInventoryIndexRoute
   '/_app/invoices/': typeof AppInvoicesIndexRoute
   '/_app/orders/': typeof AppOrdersIndexRoute
   '/_app/payments/': typeof AppPaymentsIndexRoute
+  '/_app/price-lists/': typeof AppPriceListsIndexRoute
   '/_app/products/': typeof AppProductsIndexRoute
 }
 export interface FileRouteTypes {
@@ -200,12 +227,15 @@ export interface FileRouteTypes {
     | '/orders/new'
     | '/payments/$id'
     | '/payments/new'
+    | '/price-lists/$id'
+    | '/price-lists/new'
     | '/products/new'
     | '/customers/'
     | '/inventory/'
     | '/invoices/'
     | '/orders/'
     | '/payments/'
+    | '/price-lists/'
     | '/products/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -220,12 +250,15 @@ export interface FileRouteTypes {
     | '/orders/new'
     | '/payments/$id'
     | '/payments/new'
+    | '/price-lists/$id'
+    | '/price-lists/new'
     | '/products/new'
     | '/customers'
     | '/inventory'
     | '/invoices'
     | '/orders'
     | '/payments'
+    | '/price-lists'
     | '/products'
   id:
     | '__root__'
@@ -241,12 +274,15 @@ export interface FileRouteTypes {
     | '/_app/orders/new'
     | '/_app/payments/$id'
     | '/_app/payments/new'
+    | '/_app/price-lists/$id'
+    | '/_app/price-lists/new'
     | '/_app/products/new'
     | '/_app/customers/'
     | '/_app/inventory/'
     | '/_app/invoices/'
     | '/_app/orders/'
     | '/_app/payments/'
+    | '/_app/price-lists/'
     | '/_app/products/'
   fileRoutesById: FileRoutesById
 }
@@ -292,6 +328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProductsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/price-lists/': {
+      id: '/_app/price-lists/'
+      path: '/price-lists'
+      fullPath: '/price-lists/'
+      preLoaderRoute: typeof AppPriceListsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/payments/': {
       id: '/_app/payments/'
       path: '/payments'
@@ -332,6 +375,20 @@ declare module '@tanstack/react-router' {
       path: '/products/new'
       fullPath: '/products/new'
       preLoaderRoute: typeof AppProductsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/price-lists/new': {
+      id: '/_app/price-lists/new'
+      path: '/price-lists/new'
+      fullPath: '/price-lists/new'
+      preLoaderRoute: typeof AppPriceListsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/price-lists/$id': {
+      id: '/_app/price-lists/$id'
+      path: '/price-lists/$id'
+      fullPath: '/price-lists/$id'
+      preLoaderRoute: typeof AppPriceListsIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/payments/new': {
@@ -404,12 +461,15 @@ interface AppRouteChildren {
   AppOrdersNewRoute: typeof AppOrdersNewRoute
   AppPaymentsIdRoute: typeof AppPaymentsIdRoute
   AppPaymentsNewRoute: typeof AppPaymentsNewRoute
+  AppPriceListsIdRoute: typeof AppPriceListsIdRoute
+  AppPriceListsNewRoute: typeof AppPriceListsNewRoute
   AppProductsNewRoute: typeof AppProductsNewRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
   AppInventoryIndexRoute: typeof AppInventoryIndexRoute
   AppInvoicesIndexRoute: typeof AppInvoicesIndexRoute
   AppOrdersIndexRoute: typeof AppOrdersIndexRoute
   AppPaymentsIndexRoute: typeof AppPaymentsIndexRoute
+  AppPriceListsIndexRoute: typeof AppPriceListsIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
 }
 
@@ -424,12 +484,15 @@ const AppRouteChildren: AppRouteChildren = {
   AppOrdersNewRoute: AppOrdersNewRoute,
   AppPaymentsIdRoute: AppPaymentsIdRoute,
   AppPaymentsNewRoute: AppPaymentsNewRoute,
+  AppPriceListsIdRoute: AppPriceListsIdRoute,
+  AppPriceListsNewRoute: AppPriceListsNewRoute,
   AppProductsNewRoute: AppProductsNewRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
   AppInventoryIndexRoute: AppInventoryIndexRoute,
   AppInvoicesIndexRoute: AppInvoicesIndexRoute,
   AppOrdersIndexRoute: AppOrdersIndexRoute,
   AppPaymentsIndexRoute: AppPaymentsIndexRoute,
+  AppPriceListsIndexRoute: AppPriceListsIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
 }
 
