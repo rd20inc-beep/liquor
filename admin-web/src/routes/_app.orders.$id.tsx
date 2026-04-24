@@ -139,8 +139,22 @@ function OrderDetail() {
   });
 
   if (orderQ.isLoading) return <Spinner label="Loading order" />;
-  if (orderQ.isError || !orderQ.data)
-    return <div className="text-sm text-red-400">Order not found.</div>;
+  if (orderQ.isError || !orderQ.data) {
+    const msg =
+      orderQ.error instanceof ApiError
+        ? `${orderQ.error.code} · ${orderQ.error.message}`
+        : orderQ.error instanceof Error
+          ? orderQ.error.message
+          : 'Order not found.';
+    return (
+      <div className="space-y-2">
+        <ErrorNote message={`Could not load order (id=${id}): ${msg}`} />
+        <Link to="/orders" className="text-sm text-blue-400 hover:underline">
+          ← Back to orders
+        </Link>
+      </div>
+    );
+  }
 
   const o = orderQ.data;
   const canOverride = o.status === 'held' || o.status === 'draft';

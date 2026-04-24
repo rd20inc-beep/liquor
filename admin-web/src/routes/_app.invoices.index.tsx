@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Badge, Card, Money, Spinner } from '../components/ui';
 import { api } from '../lib/api';
 
-export const Route = createFileRoute('/_app/invoices')({
+export const Route = createFileRoute('/_app/invoices/')({
   component: Invoices,
 });
 

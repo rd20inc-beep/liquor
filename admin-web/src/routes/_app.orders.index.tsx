@@ -3,7 +3,7 @@ import { Link, createFileRoute } from '@tanstack/react-router';
 import { Badge, Button, Card, Money, Spinner } from '../components/ui';
 import { api } from '../lib/api';
 
-export const Route = createFileRoute('/_app/orders')({
+export const Route = createFileRoute('/_app/orders/')({
   component: Orders,
 });
 
@@ -37,7 +37,12 @@ function Orders() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">Orders</h1>
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl font-semibold text-slate-100">Orders</h1>
+          <span className="rounded bg-emerald-950/60 px-2 py-0.5 text-[10px] font-mono uppercase text-emerald-300">
+            build v2 · click any row
+          </span>
+        </div>
         <Link to="/orders/new">
           <Button>+ New order</Button>
         </Link>

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Badge, Button, Card, Input, Spinner, Tile } from '../components/ui';
 import { api } from '../lib/api';
 
-export const Route = createFileRoute('/_app/inventory')({
+export const Route = createFileRoute('/_app/inventory/')({
   component: InventoryDashboard,
 });
 
