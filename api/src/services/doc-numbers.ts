@@ -24,43 +24,46 @@ export async function nextDocNo(
   return row!.seq;
 }
 
-/** Current four-digit year (UTC). */
-export function fullYear(): number {
-  return new Date().getUTCFullYear();
+/** Current two-digit year (UTC). */
+export function yy(): number {
+  return new Date().getUTCFullYear() % 100;
 }
 
 /**
- * Canonical brand prefix — configurable later via org_config, hard-coded for now.
+ * Canonical brand prefix — configurable later via org_config.
  * Changing this here updates every document type in one place.
  */
-const BRAND = 'LQR';
+const BRAND = 'LQ';
 
-function fmt(type: string, year: number, n: number): string {
-  return `${BRAND}-${type}-${year}-${String(n).padStart(6, '0')}`;
+/** Format for year-based docs: LQ26-00001 */
+function fmt(year: number, n: number): string {
+  return `${BRAND}${String(year).padStart(2, '0')}-${String(n).padStart(5, '0')}`;
 }
 
+// Each doc type has its own counter so an order LQ26-00001 and an invoice
+// LQ26-00001 can co-exist (they live in different tables).
 export async function orderNo(tx: Sql, orgId: string): Promise<string> {
-  const y = fullYear();
-  return fmt('SO', y, await nextDocNo(tx, orgId, 'order', y));
+  const y = yy();
+  return fmt(y, await nextDocNo(tx, orgId, 'order', y));
 }
 
 export async function invoiceNo(tx: Sql, orgId: string): Promise<string> {
-  const y = fullYear();
-  return fmt('INV', y, await nextDocNo(tx, orgId, 'invoice', y));
+  const y = yy();
+  return fmt(y, await nextDocNo(tx, orgId, 'invoice', y));
 }
 
 export async function receiptNo(tx: Sql, orgId: string): Promise<string> {
-  const y = fullYear();
-  return fmt('RC', y, await nextDocNo(tx, orgId, 'receipt', y));
+  const y = yy();
+  return fmt(y, await nextDocNo(tx, orgId, 'receipt', y));
 }
 
 export async function creditNoteNo(tx: Sql, orgId: string): Promise<string> {
-  const y = fullYear();
-  return fmt('CN', y, await nextDocNo(tx, orgId, 'credit_note', y));
+  const y = yy();
+  return fmt(y, await nextDocNo(tx, orgId, 'credit_note', y));
 }
 
-/** Customer codes are lifetime-sequential, year-less: LQR-C-000001 */
+/** Customer codes are lifetime-sequential, year-less: LQ-C00001 */
 export async function customerCode(tx: Sql, orgId: string): Promise<string> {
   const n = await nextDocNo(tx, orgId, 'customer', 0);
-  return `${BRAND}-C-${String(n).padStart(6, '0')}`;
+  return `${BRAND}-C${String(n).padStart(5, '0')}`;
 }
