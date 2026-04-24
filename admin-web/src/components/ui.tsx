@@ -13,7 +13,7 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
 }) {
   const base =
-    'inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-slate-50 disabled:opacity-50';
+    'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-slate-50 disabled:opacity-50';
   const variants = {
     primary: 'bg-amber-600 hover:bg-amber-700 text-white focus:ring-amber-500',
     secondary:
@@ -30,7 +30,7 @@ export function Input({
 }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${className}`}
+      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${className}`}
       {...props}
     />
   );
@@ -43,7 +43,7 @@ export function Select({
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${className}`}
+      className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${className}`}
       {...props}
     >
       {children}
@@ -93,12 +93,12 @@ export function Card({
       className={`rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-black/[0.02] ${className}`}
     >
       {title && (
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2">
           <h3 className="text-sm font-semibold tracking-tight text-slate-900">{title}</h3>
           {actions}
         </div>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-4">{children}</div>
     </div>
   );
 }
@@ -178,17 +178,17 @@ export function Tile({
   };
   return (
     <div
-      className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-black/[0.02] border-l-4 ${
+      className={`rounded-xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-black/[0.02] border-l-4 ${
         tone ? accent[tone] : 'border-l-slate-300'
       }`}
     >
       <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
         {label}
       </div>
-      <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 tabular">
+      <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 tabular">
         {value}
       </div>
-      {sub && <div className="mt-1.5 text-xs text-slate-500">{sub}</div>}
+      {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
     </div>
   );
 }
