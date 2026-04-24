@@ -49,8 +49,9 @@ function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6 rounded-xl border border-slate-200 bg-slate-100/70 p-8 shadow-xl">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900">Liquor OS</h1>
+        <div className="flex flex-col items-center text-center">
+          <img src="/logo.png" alt="Liquor OS" className="h-14 w-14" />
+          <h1 className="mt-2 text-xl font-semibold text-slate-900">Liquor OS</h1>
           <p className="mt-1 text-sm text-slate-600">Admin — sign in</p>
         </div>
 
