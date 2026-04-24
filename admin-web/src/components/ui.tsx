@@ -185,7 +185,7 @@ export function Tile({
       <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
         {label}
       </div>
-      <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 tabular">
+      <div className="mt-1 text-xl font-semibold tracking-tight text-slate-900 tabular">
         {value}
       </div>
       {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}

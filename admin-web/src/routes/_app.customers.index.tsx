@@ -45,7 +45,7 @@ function CustomersList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Customers</h1>
+        <h1 className="text-xl font-semibold text-slate-900">Customers</h1>
         <Link to="/customers/new">
           <Button>+ New customer</Button>
         </Link>

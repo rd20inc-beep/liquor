@@ -47,7 +47,7 @@ function Approvals() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-slate-900">Approvals</h1>
+      <h1 className="text-xl font-semibold text-slate-900">Approvals</h1>
       {error && <ErrorNote message={error} />}
       <Card>
         {listQ.isLoading ? (

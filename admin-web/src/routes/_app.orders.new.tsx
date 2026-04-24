@@ -141,7 +141,7 @@ function NewOrder() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-slate-900">Order submitted</h1>
+          <h1 className="text-xl font-semibold text-slate-900">Order submitted</h1>
           <Link to="/orders" className="text-sm text-amber-400 hover:underline">
             ← Orders
           </Link>
@@ -201,7 +201,7 @@ function NewOrder() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">New order</h1>
+        <h1 className="text-xl font-semibold text-slate-900">New order</h1>
         <Link to="/orders" className="text-sm text-amber-400 hover:underline">
           ← Orders
         </Link>

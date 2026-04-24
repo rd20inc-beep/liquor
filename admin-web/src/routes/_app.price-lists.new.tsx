@@ -32,7 +32,7 @@ function NewPriceList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">New price list</h1>
+        <h1 className="text-xl font-semibold text-slate-900">New price list</h1>
         <Link to="/price-lists" className="text-sm text-amber-400 hover:underline">
           ← All price lists
         </Link>

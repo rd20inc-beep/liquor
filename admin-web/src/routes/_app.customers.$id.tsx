@@ -103,7 +103,7 @@ function CustomerDetail() {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Customer</div>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-xl font-semibold text-slate-900">
             {c.name}
             <span className="ml-3 text-sm text-slate-500">({c.code})</span>
           </h1>

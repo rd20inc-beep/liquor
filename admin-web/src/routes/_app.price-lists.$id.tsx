@@ -90,7 +90,7 @@ function PriceListDetail() {
       <div className="flex items-start justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Price list</div>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-xl font-semibold text-slate-900">
             {pl.name} {pl.is_default && <Badge tone="blue">default</Badge>}
           </h1>
           <div className="mt-1 text-sm text-slate-600">

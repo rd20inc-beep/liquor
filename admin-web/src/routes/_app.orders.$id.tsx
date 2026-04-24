@@ -242,7 +242,7 @@ function OrderDetail() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Order</div>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-xl font-semibold text-slate-900">
             {o.order_no}{' '}
             <Badge tone={statusTone[o.status] ?? 'slate'}>{o.status}</Badge>
           </h1>

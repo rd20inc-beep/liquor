@@ -37,7 +37,7 @@ function PaymentsList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Payments</h1>
+        <h1 className="text-xl font-semibold text-slate-900">Payments</h1>
         <Link to="/payments/new">
           <Button>+ Record payment</Button>
         </Link>

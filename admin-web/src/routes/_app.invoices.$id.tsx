@@ -130,7 +130,7 @@ function InvoiceDetail() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Invoice</div>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-xl font-semibold text-slate-900">
             {inv.invoice_no}{' '}
             <Badge tone={statusTone[inv.status] ?? 'slate'}>{inv.status}</Badge>{' '}
             {inv.locked_at && <Badge tone="green">locked</Badge>}

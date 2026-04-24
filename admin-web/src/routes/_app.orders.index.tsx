@@ -92,7 +92,7 @@ function Orders() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Orders</h1>
+        <h1 className="text-xl font-semibold text-slate-900">Orders</h1>
         <Link to="/orders/new">
           <Button>+ New order</Button>
         </Link>
