@@ -10,6 +10,7 @@ dotenv.config({ path: resolve(import.meta.dirname, '../../.env') });
 
 import postgres from 'postgres';
 import { config } from './config.js';
+import { ensureCurrentPeriod, seedDefaultCoa } from './services/gl-seed.js';
 
 const sql = postgres(config.DATABASE_URL);
 
@@ -87,6 +88,10 @@ async function seed() {
     ON CONFLICT (org_id, name) DO NOTHING
   `;
   console.log('  Route: Route-A');
+
+  await seedDefaultCoa(sql, orgId);
+  await ensureCurrentPeriod(sql, orgId);
+  console.log('  Default COA + current GL period seeded');
 
   await sql.end();
   console.log('Seed complete.');

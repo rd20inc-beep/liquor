@@ -23,6 +23,7 @@ import { Route as AppOrdersIndexRouteImport } from './routes/_app.orders.index'
 import { Route as AppInvoicesIndexRouteImport } from './routes/_app.invoices.index'
 import { Route as AppInventoryIndexRouteImport } from './routes/_app.inventory.index'
 import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
+import { Route as AppAccountingIndexRouteImport } from './routes/_app.accounting.index'
 import { Route as AppWarehousesIdRouteImport } from './routes/_app.warehouses.$id'
 import { Route as AppUsersIdRouteImport } from './routes/_app.users.$id'
 import { Route as AppProductsNewRouteImport } from './routes/_app.products.new'
@@ -39,6 +40,12 @@ import { Route as AppInventoryReceiptRouteImport } from './routes/_app.inventory
 import { Route as AppInventoryAdjustRouteImport } from './routes/_app.inventory.adjust'
 import { Route as AppCustomersNewRouteImport } from './routes/_app.customers.new'
 import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
+import { Route as AppAccountingTrialBalanceRouteImport } from './routes/_app.accounting.trial-balance'
+import { Route as AppAccountingCoaRouteImport } from './routes/_app.accounting.coa'
+import { Route as AppAccountingJournalsIndexRouteImport } from './routes/_app.accounting.journals.index'
+import { Route as AppAccountingJournalsNewRouteImport } from './routes/_app.accounting.journals.new'
+import { Route as AppAccountingJournalsIdRouteImport } from './routes/_app.accounting.journals.$id'
+import { Route as AppAccountingAccountIdRouteImport } from './routes/_app.accounting.account.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -107,6 +114,11 @@ const AppInventoryIndexRoute = AppInventoryIndexRouteImport.update({
 const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   id: '/customers/',
   path: '/customers/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountingIndexRoute = AppAccountingIndexRouteImport.update({
+  id: '/accounting/',
+  path: '/accounting/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppWarehousesIdRoute = AppWarehousesIdRouteImport.update({
@@ -189,12 +201,47 @@ const AppCustomersIdRoute = AppCustomersIdRouteImport.update({
   path: '/customers/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAccountingTrialBalanceRoute =
+  AppAccountingTrialBalanceRouteImport.update({
+    id: '/accounting/trial-balance',
+    path: '/accounting/trial-balance',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingCoaRoute = AppAccountingCoaRouteImport.update({
+  id: '/accounting/coa',
+  path: '/accounting/coa',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountingJournalsIndexRoute =
+  AppAccountingJournalsIndexRouteImport.update({
+    id: '/accounting/journals/',
+    path: '/accounting/journals/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingJournalsNewRoute =
+  AppAccountingJournalsNewRouteImport.update({
+    id: '/accounting/journals/new',
+    path: '/accounting/journals/new',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingJournalsIdRoute = AppAccountingJournalsIdRouteImport.update({
+  id: '/accounting/journals/$id',
+  path: '/accounting/journals/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountingAccountIdRoute = AppAccountingAccountIdRouteImport.update({
+  id: '/accounting/account/$id',
+  path: '/accounting/account/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/approvals': typeof AppApprovalsRoute
   '/audit': typeof AppAuditRoute
+  '/accounting/coa': typeof AppAccountingCoaRoute
+  '/accounting/trial-balance': typeof AppAccountingTrialBalanceRoute
   '/customers/$id': typeof AppCustomersIdRoute
   '/customers/new': typeof AppCustomersNewRoute
   '/inventory/adjust': typeof AppInventoryAdjustRoute
@@ -211,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/products/new': typeof AppProductsNewRoute
   '/users/$id': typeof AppUsersIdRoute
   '/warehouses/$id': typeof AppWarehousesIdRoute
+  '/accounting/': typeof AppAccountingIndexRoute
   '/customers/': typeof AppCustomersIndexRoute
   '/inventory/': typeof AppInventoryIndexRoute
   '/invoices/': typeof AppInvoicesIndexRoute
@@ -220,12 +268,18 @@ export interface FileRoutesByFullPath {
   '/products/': typeof AppProductsIndexRoute
   '/users/': typeof AppUsersIndexRoute
   '/warehouses/': typeof AppWarehousesIndexRoute
+  '/accounting/account/$id': typeof AppAccountingAccountIdRoute
+  '/accounting/journals/$id': typeof AppAccountingJournalsIdRoute
+  '/accounting/journals/new': typeof AppAccountingJournalsNewRoute
+  '/accounting/journals/': typeof AppAccountingJournalsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/approvals': typeof AppApprovalsRoute
   '/audit': typeof AppAuditRoute
   '/': typeof AppIndexRoute
+  '/accounting/coa': typeof AppAccountingCoaRoute
+  '/accounting/trial-balance': typeof AppAccountingTrialBalanceRoute
   '/customers/$id': typeof AppCustomersIdRoute
   '/customers/new': typeof AppCustomersNewRoute
   '/inventory/adjust': typeof AppInventoryAdjustRoute
@@ -242,6 +296,7 @@ export interface FileRoutesByTo {
   '/products/new': typeof AppProductsNewRoute
   '/users/$id': typeof AppUsersIdRoute
   '/warehouses/$id': typeof AppWarehousesIdRoute
+  '/accounting': typeof AppAccountingIndexRoute
   '/customers': typeof AppCustomersIndexRoute
   '/inventory': typeof AppInventoryIndexRoute
   '/invoices': typeof AppInvoicesIndexRoute
@@ -251,6 +306,10 @@ export interface FileRoutesByTo {
   '/products': typeof AppProductsIndexRoute
   '/users': typeof AppUsersIndexRoute
   '/warehouses': typeof AppWarehousesIndexRoute
+  '/accounting/account/$id': typeof AppAccountingAccountIdRoute
+  '/accounting/journals/$id': typeof AppAccountingJournalsIdRoute
+  '/accounting/journals/new': typeof AppAccountingJournalsNewRoute
+  '/accounting/journals': typeof AppAccountingJournalsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -259,6 +318,8 @@ export interface FileRoutesById {
   '/_app/approvals': typeof AppApprovalsRoute
   '/_app/audit': typeof AppAuditRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/accounting/coa': typeof AppAccountingCoaRoute
+  '/_app/accounting/trial-balance': typeof AppAccountingTrialBalanceRoute
   '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/customers/new': typeof AppCustomersNewRoute
   '/_app/inventory/adjust': typeof AppInventoryAdjustRoute
@@ -275,6 +336,7 @@ export interface FileRoutesById {
   '/_app/products/new': typeof AppProductsNewRoute
   '/_app/users/$id': typeof AppUsersIdRoute
   '/_app/warehouses/$id': typeof AppWarehousesIdRoute
+  '/_app/accounting/': typeof AppAccountingIndexRoute
   '/_app/customers/': typeof AppCustomersIndexRoute
   '/_app/inventory/': typeof AppInventoryIndexRoute
   '/_app/invoices/': typeof AppInvoicesIndexRoute
@@ -284,6 +346,10 @@ export interface FileRoutesById {
   '/_app/products/': typeof AppProductsIndexRoute
   '/_app/users/': typeof AppUsersIndexRoute
   '/_app/warehouses/': typeof AppWarehousesIndexRoute
+  '/_app/accounting/account/$id': typeof AppAccountingAccountIdRoute
+  '/_app/accounting/journals/$id': typeof AppAccountingJournalsIdRoute
+  '/_app/accounting/journals/new': typeof AppAccountingJournalsNewRoute
+  '/_app/accounting/journals/': typeof AppAccountingJournalsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -292,6 +358,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/approvals'
     | '/audit'
+    | '/accounting/coa'
+    | '/accounting/trial-balance'
     | '/customers/$id'
     | '/customers/new'
     | '/inventory/adjust'
@@ -308,6 +376,7 @@ export interface FileRouteTypes {
     | '/products/new'
     | '/users/$id'
     | '/warehouses/$id'
+    | '/accounting/'
     | '/customers/'
     | '/inventory/'
     | '/invoices/'
@@ -317,12 +386,18 @@ export interface FileRouteTypes {
     | '/products/'
     | '/users/'
     | '/warehouses/'
+    | '/accounting/account/$id'
+    | '/accounting/journals/$id'
+    | '/accounting/journals/new'
+    | '/accounting/journals/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/approvals'
     | '/audit'
     | '/'
+    | '/accounting/coa'
+    | '/accounting/trial-balance'
     | '/customers/$id'
     | '/customers/new'
     | '/inventory/adjust'
@@ -339,6 +414,7 @@ export interface FileRouteTypes {
     | '/products/new'
     | '/users/$id'
     | '/warehouses/$id'
+    | '/accounting'
     | '/customers'
     | '/inventory'
     | '/invoices'
@@ -348,6 +424,10 @@ export interface FileRouteTypes {
     | '/products'
     | '/users'
     | '/warehouses'
+    | '/accounting/account/$id'
+    | '/accounting/journals/$id'
+    | '/accounting/journals/new'
+    | '/accounting/journals'
   id:
     | '__root__'
     | '/_app'
@@ -355,6 +435,8 @@ export interface FileRouteTypes {
     | '/_app/approvals'
     | '/_app/audit'
     | '/_app/'
+    | '/_app/accounting/coa'
+    | '/_app/accounting/trial-balance'
     | '/_app/customers/$id'
     | '/_app/customers/new'
     | '/_app/inventory/adjust'
@@ -371,6 +453,7 @@ export interface FileRouteTypes {
     | '/_app/products/new'
     | '/_app/users/$id'
     | '/_app/warehouses/$id'
+    | '/_app/accounting/'
     | '/_app/customers/'
     | '/_app/inventory/'
     | '/_app/invoices/'
@@ -380,6 +463,10 @@ export interface FileRouteTypes {
     | '/_app/products/'
     | '/_app/users/'
     | '/_app/warehouses/'
+    | '/_app/accounting/account/$id'
+    | '/_app/accounting/journals/$id'
+    | '/_app/accounting/journals/new'
+    | '/_app/accounting/journals/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -485,6 +572,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/customers/'
       preLoaderRoute: typeof AppCustomersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/': {
+      id: '/_app/accounting/'
+      path: '/accounting'
+      fullPath: '/accounting/'
+      preLoaderRoute: typeof AppAccountingIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/warehouses/$id': {
@@ -599,6 +693,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomersIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/accounting/trial-balance': {
+      id: '/_app/accounting/trial-balance'
+      path: '/accounting/trial-balance'
+      fullPath: '/accounting/trial-balance'
+      preLoaderRoute: typeof AppAccountingTrialBalanceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/coa': {
+      id: '/_app/accounting/coa'
+      path: '/accounting/coa'
+      fullPath: '/accounting/coa'
+      preLoaderRoute: typeof AppAccountingCoaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/journals/': {
+      id: '/_app/accounting/journals/'
+      path: '/accounting/journals'
+      fullPath: '/accounting/journals/'
+      preLoaderRoute: typeof AppAccountingJournalsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/journals/new': {
+      id: '/_app/accounting/journals/new'
+      path: '/accounting/journals/new'
+      fullPath: '/accounting/journals/new'
+      preLoaderRoute: typeof AppAccountingJournalsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/journals/$id': {
+      id: '/_app/accounting/journals/$id'
+      path: '/accounting/journals/$id'
+      fullPath: '/accounting/journals/$id'
+      preLoaderRoute: typeof AppAccountingJournalsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/account/$id': {
+      id: '/_app/accounting/account/$id'
+      path: '/accounting/account/$id'
+      fullPath: '/accounting/account/$id'
+      preLoaderRoute: typeof AppAccountingAccountIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -606,6 +742,8 @@ interface AppRouteChildren {
   AppApprovalsRoute: typeof AppApprovalsRoute
   AppAuditRoute: typeof AppAuditRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAccountingCoaRoute: typeof AppAccountingCoaRoute
+  AppAccountingTrialBalanceRoute: typeof AppAccountingTrialBalanceRoute
   AppCustomersIdRoute: typeof AppCustomersIdRoute
   AppCustomersNewRoute: typeof AppCustomersNewRoute
   AppInventoryAdjustRoute: typeof AppInventoryAdjustRoute
@@ -622,6 +760,7 @@ interface AppRouteChildren {
   AppProductsNewRoute: typeof AppProductsNewRoute
   AppUsersIdRoute: typeof AppUsersIdRoute
   AppWarehousesIdRoute: typeof AppWarehousesIdRoute
+  AppAccountingIndexRoute: typeof AppAccountingIndexRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
   AppInventoryIndexRoute: typeof AppInventoryIndexRoute
   AppInvoicesIndexRoute: typeof AppInvoicesIndexRoute
@@ -631,12 +770,18 @@ interface AppRouteChildren {
   AppProductsIndexRoute: typeof AppProductsIndexRoute
   AppUsersIndexRoute: typeof AppUsersIndexRoute
   AppWarehousesIndexRoute: typeof AppWarehousesIndexRoute
+  AppAccountingAccountIdRoute: typeof AppAccountingAccountIdRoute
+  AppAccountingJournalsIdRoute: typeof AppAccountingJournalsIdRoute
+  AppAccountingJournalsNewRoute: typeof AppAccountingJournalsNewRoute
+  AppAccountingJournalsIndexRoute: typeof AppAccountingJournalsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppApprovalsRoute: AppApprovalsRoute,
   AppAuditRoute: AppAuditRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAccountingCoaRoute: AppAccountingCoaRoute,
+  AppAccountingTrialBalanceRoute: AppAccountingTrialBalanceRoute,
   AppCustomersIdRoute: AppCustomersIdRoute,
   AppCustomersNewRoute: AppCustomersNewRoute,
   AppInventoryAdjustRoute: AppInventoryAdjustRoute,
@@ -653,6 +798,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProductsNewRoute: AppProductsNewRoute,
   AppUsersIdRoute: AppUsersIdRoute,
   AppWarehousesIdRoute: AppWarehousesIdRoute,
+  AppAccountingIndexRoute: AppAccountingIndexRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
   AppInventoryIndexRoute: AppInventoryIndexRoute,
   AppInvoicesIndexRoute: AppInvoicesIndexRoute,
@@ -662,6 +808,10 @@ const AppRouteChildren: AppRouteChildren = {
   AppProductsIndexRoute: AppProductsIndexRoute,
   AppUsersIndexRoute: AppUsersIndexRoute,
   AppWarehousesIndexRoute: AppWarehousesIndexRoute,
+  AppAccountingAccountIdRoute: AppAccountingAccountIdRoute,
+  AppAccountingJournalsIdRoute: AppAccountingJournalsIdRoute,
+  AppAccountingJournalsNewRoute: AppAccountingJournalsNewRoute,
+  AppAccountingJournalsIndexRoute: AppAccountingJournalsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

@@ -1090,6 +1090,106 @@ CREATE TRIGGER payment_allocations_lock_guard
   FOR EACH ROW EXECUTE FUNCTION enforce_allocation_lock();
 
 -- ============================================================================
+-- GENERAL LEDGER (Phase A foundation)
+-- ============================================================================
+
+CREATE TYPE gl_account_type AS ENUM ('asset', 'liability', 'equity', 'revenue', 'cogs', 'expense');
+CREATE TYPE gl_normal_side  AS ENUM ('debit', 'credit');
+CREATE TYPE gl_period_status AS ENUM ('open', 'closed');
+
+CREATE TABLE gl_accounts (
+    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id        uuid NOT NULL REFERENCES orgs(id),
+    code          text NOT NULL,
+    name          text NOT NULL,
+    type          gl_account_type NOT NULL,
+    normal_side   gl_normal_side  NOT NULL,
+    parent_id     uuid REFERENCES gl_accounts(id),
+    is_postable   boolean NOT NULL DEFAULT true,    -- false for header/group rows
+    is_control    boolean NOT NULL DEFAULT false,   -- AR/AP/Inventory — no manual JE
+    active        boolean NOT NULL DEFAULT true,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (org_id, code)
+);
+CREATE INDEX gl_accounts_org_id ON gl_accounts(org_id);
+CREATE INDEX gl_accounts_parent ON gl_accounts(parent_id);
+
+CREATE TABLE gl_periods (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id      uuid NOT NULL REFERENCES orgs(id),
+    year        int NOT NULL CHECK (year BETWEEN 2000 AND 2100),
+    month       int NOT NULL CHECK (month BETWEEN 1 AND 12),
+    status      gl_period_status NOT NULL DEFAULT 'open',
+    closed_at   timestamptz,
+    closed_by   uuid REFERENCES users(id),
+    UNIQUE (org_id, year, month)
+);
+CREATE INDEX gl_periods_org ON gl_periods(org_id, year, month);
+
+CREATE TABLE gl_journals (
+    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id        uuid NOT NULL REFERENCES orgs(id),
+    journal_no    text NOT NULL,
+    je_date       date NOT NULL,
+    source_type   text NOT NULL,                    -- 'manual', 'invoice', 'payment', 'credit_note', 'stock_receipt', 'stock_adjust', 'cogs', 'bill', 'bill_payment', 'expense'
+    source_id     uuid,
+    memo          text,
+    posted        boolean NOT NULL DEFAULT false,
+    posted_at     timestamptz,
+    posted_by     uuid REFERENCES users(id),
+    reversal_of   uuid REFERENCES gl_journals(id),
+    reversed_by   uuid REFERENCES gl_journals(id),
+    created_by    uuid NOT NULL REFERENCES users(id),
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (org_id, journal_no)
+);
+CREATE INDEX gl_journals_org_date ON gl_journals(org_id, je_date DESC);
+CREATE INDEX gl_journals_source   ON gl_journals(source_type, source_id);
+
+CREATE TABLE gl_journal_lines (
+    id            bigserial PRIMARY KEY,
+    journal_id    uuid NOT NULL REFERENCES gl_journals(id) ON DELETE CASCADE,
+    org_id        uuid NOT NULL REFERENCES orgs(id),
+    account_id    uuid NOT NULL REFERENCES gl_accounts(id),
+    debit         numeric(14,2) NOT NULL DEFAULT 0 CHECK (debit  >= 0),
+    credit        numeric(14,2) NOT NULL DEFAULT 0 CHECK (credit >= 0),
+    memo          text,
+    customer_id   uuid REFERENCES customers(id),
+    product_id    uuid REFERENCES products(id),
+    batch_id      uuid REFERENCES stock_batches(id),
+    line_no       int NOT NULL,
+    CHECK ((debit > 0 AND credit = 0) OR (credit > 0 AND debit = 0)),
+    UNIQUE (journal_id, line_no)
+);
+CREATE INDEX gl_lines_journal  ON gl_journal_lines(journal_id);
+CREATE INDEX gl_lines_account  ON gl_journal_lines(account_id);
+CREATE INDEX gl_lines_customer ON gl_journal_lines(customer_id) WHERE customer_id IS NOT NULL;
+
+-- Posted journals are immutable. Reversals are created as new journals
+-- (linked via reversal_of/reversed_by) — never edit lines after posting.
+CREATE OR REPLACE FUNCTION gl_journal_immutable() RETURNS trigger AS $$
+DECLARE
+    j_posted boolean;
+BEGIN
+    SELECT posted INTO j_posted FROM gl_journals
+        WHERE id = COALESCE(NEW.journal_id, OLD.journal_id);
+    IF j_posted THEN
+        IF current_setting('app.bypass_lock', true) = 'on' THEN
+            IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+            RETURN NEW;
+        END IF;
+        RAISE EXCEPTION 'cannot modify lines of a posted journal'
+            USING ERRCODE = 'check_violation';
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER gl_journal_lines_immutable
+    BEFORE INSERT OR UPDATE OR DELETE ON gl_journal_lines
+    FOR EACH ROW EXECUTE FUNCTION gl_journal_immutable();
+
+-- ============================================================================
 -- SEED: roles_permissions
 -- ============================================================================
 
@@ -1139,6 +1239,8 @@ INSERT INTO roles_permissions(role, resource, action, scope) VALUES
   ('accounts',  'dashboard',    'read',     'all'),
   ('accounts',  'product',      'read',     'all'),
   ('accounts',  'stock',        'transfer', 'all'),
+  ('accounts',  'gl',           'read',     'all'),
+  ('accounts',  'gl',           'post',     'all'),
   -- Admin (wildcard)
   ('admin',     '*',            '*',        'all'),
   -- Owner
@@ -1147,7 +1249,9 @@ INSERT INTO roles_permissions(role, resource, action, scope) VALUES
   ('owner',     'credit_limit', 'edit',     'all'),
   ('owner',     'stock_adjust', 'approve',  'all'),
   ('owner',     'customer',     'hold',     'all'),
-  ('owner',     'dashboard',    'read',     'all')
+  ('owner',     'dashboard',    'read',     'all'),
+  ('owner',     'gl',           'post',     'all'),
+  ('owner',     'gl',           'close',    'all')
 ON CONFLICT DO NOTHING;
 
 COMMIT;

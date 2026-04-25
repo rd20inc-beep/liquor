@@ -11,7 +11,7 @@ import type { Sql } from 'postgres';
 export async function nextDocNo(
   tx: Sql,
   orgId: string,
-  docType: 'order' | 'invoice' | 'receipt' | 'credit_note' | 'customer',
+  docType: 'order' | 'invoice' | 'receipt' | 'credit_note' | 'customer' | 'journal',
   year: number,
 ): Promise<number> {
   const [row] = await tx<Array<{ seq: number }>>`
@@ -60,6 +60,12 @@ export async function receiptNo(tx: Sql, orgId: string): Promise<string> {
 export async function creditNoteNo(tx: Sql, orgId: string): Promise<string> {
   const y = yy();
   return fmt(y, await nextDocNo(tx, orgId, 'credit_note', y));
+}
+
+export async function journalNo(tx: Sql, orgId: string): Promise<string> {
+  const y = yy();
+  const n = await nextDocNo(tx, orgId, 'journal', y);
+  return `${BRAND}-JE${String(y).padStart(2, '0')}-${String(n).padStart(5, '0')}`;
 }
 
 /** Customer codes are lifetime-sequential, year-less: LQ-C00001 */

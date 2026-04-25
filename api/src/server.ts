@@ -15,6 +15,7 @@ import auditRoutes from './routes/audit.js';
 import authRoutes from './routes/auth.js';
 import customerRoutes from './routes/customers.js';
 import cycleCountRoutes from './routes/cycle-counts.js';
+import glRoutes from './routes/gl.js';
 import healthRoutes from './routes/health.js';
 import invoiceRoutes from './routes/invoices.js';
 import orderRoutes from './routes/orders.js';
@@ -87,6 +88,7 @@ export async function buildServer() {
       await api.register(invoiceRoutes);
       await api.register(paymentRoutes);
       await api.register(paymentTermRoutes);
+      await api.register(glRoutes);
       await api.register(adminRoutes);
     },
     { prefix: '/v1' },
