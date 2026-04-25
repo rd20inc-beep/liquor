@@ -1018,12 +1018,21 @@ CREATE TRIGGER credit_notes_lock_guard
   BEFORE UPDATE OR DELETE ON credit_notes FOR EACH ROW EXECUTE FUNCTION enforce_lock();
 
 -- Append-only enforcement
+-- Append-only ledgers: bypass_lock allows archival deletion (rare, requires
+-- admin) for ar_ledger and stock_movements.
 CREATE OR REPLACE FUNCTION forbid_mutation() RETURNS trigger AS $$
 BEGIN
     IF TG_OP = 'DELETE' AND current_setting('app.bypass_lock', true) = 'on' THEN
         RETURN OLD;  -- allow archival with bypass
     END IF;
     RAISE EXCEPTION '% is append-only', TG_TABLE_NAME USING ERRCODE = 'check_violation';
+END $$ LANGUAGE plpgsql;
+
+-- Audit log: absolutely immutable. No bypass — compliance evidence.
+CREATE OR REPLACE FUNCTION forbid_mutation_strict() RETURNS trigger AS $$
+BEGIN
+    RAISE EXCEPTION '% is tamper-evident; no UPDATE or DELETE permitted',
+        TG_TABLE_NAME USING ERRCODE = 'check_violation';
 END $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER ar_ledger_append_only
@@ -1033,28 +1042,50 @@ CREATE TRIGGER stock_movements_append_only
   BEFORE UPDATE OR DELETE ON stock_movements FOR EACH ROW EXECUTE FUNCTION forbid_mutation();
 
 CREATE TRIGGER audit_log_append_only
-  BEFORE UPDATE OR DELETE ON audit_log FOR EACH ROW EXECUTE FUNCTION forbid_mutation();
+  BEFORE UPDATE OR DELETE ON audit_log FOR EACH ROW EXECUTE FUNCTION forbid_mutation_strict();
 
--- Payment allocation sum check
+-- Payment allocation sum check.
+-- Enforces TWO invariants:
+--   (a) sum of allocations on a single payment <= payment.amount
+--   (b) sum of allocations across all payments to a single invoice <= invoice.total
+-- (b) prevents two payments from each fully allocating the same invoice.
+-- Deferred so multi-row inserts in the same tx can rebalance before commit.
 CREATE OR REPLACE FUNCTION check_allocation_sum() RETURNS trigger AS $$
 DECLARE
     target_payment_id uuid;
-    pay_amt  numeric(14,2);
-    alloc_sum numeric(14,2);
+    target_invoice_id uuid;
+    pay_amt    numeric(14,2);
+    inv_total  numeric(14,2);
+    alloc_sum  numeric(14,2);
 BEGIN
     target_payment_id := COALESCE(NEW.payment_id, OLD.payment_id);
+    target_invoice_id := COALESCE(NEW.invoice_id, OLD.invoice_id);
+
+    -- (a) per-payment cap
     SELECT amount INTO pay_amt FROM payments WHERE id = target_payment_id;
-    -- DEFERRED trigger fires at commit; if payment was deleted in the same tx
-    -- the allocation rows should have been cascade-deleted, so any survivors
-    -- here indicate a data-integrity bug.
     IF pay_amt IS NULL THEN
         RAISE EXCEPTION 'payment % not found for allocation', target_payment_id;
     END IF;
     SELECT COALESCE(SUM(amount), 0) INTO alloc_sum
       FROM payment_allocations WHERE payment_id = target_payment_id;
     IF alloc_sum > pay_amt THEN
-        RAISE EXCEPTION 'Allocations (%) exceed payment amount (%)', alloc_sum, pay_amt;
+        RAISE EXCEPTION 'Allocations (%) exceed payment amount (%)', alloc_sum, pay_amt
+            USING ERRCODE = 'check_violation';
     END IF;
+
+    -- (b) per-invoice cap
+    SELECT total INTO inv_total FROM invoices WHERE id = target_invoice_id;
+    IF inv_total IS NULL THEN
+        RAISE EXCEPTION 'invoice % not found for allocation', target_invoice_id;
+    END IF;
+    SELECT COALESCE(SUM(amount), 0) INTO alloc_sum
+      FROM payment_allocations WHERE invoice_id = target_invoice_id;
+    IF alloc_sum > inv_total THEN
+        RAISE EXCEPTION 'Allocations to invoice % (%) exceed invoice total (%)',
+            target_invoice_id, alloc_sum, inv_total
+            USING ERRCODE = 'check_violation';
+    END IF;
+
     IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
     RETURN NEW;
 END $$ LANGUAGE plpgsql;
@@ -1188,6 +1219,128 @@ END $$ LANGUAGE plpgsql;
 CREATE TRIGGER gl_journal_lines_immutable
     BEFORE INSERT OR UPDATE OR DELETE ON gl_journal_lines
     FOR EACH ROW EXECUTE FUNCTION gl_journal_immutable();
+
+-- Reversal must point to a different journal — never self-reversal.
+ALTER TABLE gl_journals
+    ADD CONSTRAINT gl_journals_no_self_reversal
+    CHECK (reversal_of IS NULL OR reversal_of <> id);
+ALTER TABLE gl_journals
+    ADD CONSTRAINT gl_journals_no_self_reversed_by
+    CHECK (reversed_by IS NULL OR reversed_by <> id);
+
+-- Balance enforcement: SUM(debit) = SUM(credit) per journal at post time.
+-- Fires when the journal transitions to posted=true. The header-first /
+-- lines-second / post-third pattern in services satisfies this naturally.
+CREATE OR REPLACE FUNCTION gl_assert_balanced() RETURNS trigger AS $$
+DECLARE
+    total_debit  numeric(14,2);
+    total_credit numeric(14,2);
+BEGIN
+    IF NEW.posted IS NOT TRUE THEN RETURN NEW; END IF;
+    IF TG_OP = 'UPDATE' AND OLD.posted = true THEN RETURN NEW; END IF;
+    SELECT COALESCE(SUM(debit), 0), COALESCE(SUM(credit), 0)
+        INTO total_debit, total_credit
+        FROM gl_journal_lines
+        WHERE journal_id = NEW.id;
+    IF total_debit = 0 THEN
+        RAISE EXCEPTION 'journal % has zero amounts', NEW.journal_no
+            USING ERRCODE = 'check_violation';
+    END IF;
+    IF total_debit <> total_credit THEN
+        RAISE EXCEPTION 'journal % does not balance: debit=% credit=%',
+            NEW.journal_no, total_debit, total_credit
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER gl_journals_balance
+    BEFORE INSERT OR UPDATE OF posted ON gl_journals
+    FOR EACH ROW EXECUTE FUNCTION gl_assert_balanced();
+
+-- Period closure: posting requires the je_date's period to exist and be open.
+-- Bypassable via app.bypass_lock for back-dated adjusting entries.
+CREATE OR REPLACE FUNCTION gl_assert_period_open() RETURNS trigger AS $$
+DECLARE
+    p_status gl_period_status;
+    p_year   int;
+    p_month  int;
+BEGIN
+    IF NEW.posted IS NOT TRUE THEN RETURN NEW; END IF;
+    IF TG_OP = 'UPDATE' AND OLD.posted = true THEN RETURN NEW; END IF;
+    IF current_setting('app.bypass_lock', true) = 'on' THEN RETURN NEW; END IF;
+    p_year  := EXTRACT(YEAR  FROM NEW.je_date)::int;
+    p_month := EXTRACT(MONTH FROM NEW.je_date)::int;
+    SELECT status INTO p_status
+        FROM gl_periods
+        WHERE org_id = NEW.org_id AND year = p_year AND month = p_month;
+    IF p_status IS NULL THEN
+        RAISE EXCEPTION 'no gl_period for %-% in org %; open it before posting',
+            p_year, p_month, NEW.org_id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    IF p_status = 'closed' THEN
+        RAISE EXCEPTION 'gl_period %-% is closed for org %', p_year, p_month, NEW.org_id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER gl_journals_period_open
+    BEFORE INSERT OR UPDATE OF je_date, posted ON gl_journals
+    FOR EACH ROW EXECUTE FUNCTION gl_assert_period_open();
+
+-- Header immutability: once posted, only reversed_by may change. Bypassable
+-- via app.bypass_lock for emergency archival ops.
+CREATE OR REPLACE FUNCTION gl_journal_header_immutable() RETURNS trigger AS $$
+BEGIN
+    IF OLD.posted IS NOT TRUE THEN RETURN NEW; END IF;
+    IF current_setting('app.bypass_lock', true) = 'on' THEN RETURN NEW; END IF;
+    -- Allow only reversed_by to change post-posting.
+    IF NEW.org_id      IS DISTINCT FROM OLD.org_id
+       OR NEW.journal_no  IS DISTINCT FROM OLD.journal_no
+       OR NEW.je_date     IS DISTINCT FROM OLD.je_date
+       OR NEW.source_type IS DISTINCT FROM OLD.source_type
+       OR NEW.source_id   IS DISTINCT FROM OLD.source_id
+       OR NEW.memo        IS DISTINCT FROM OLD.memo
+       OR NEW.posted      IS DISTINCT FROM OLD.posted
+       OR NEW.posted_at   IS DISTINCT FROM OLD.posted_at
+       OR NEW.posted_by   IS DISTINCT FROM OLD.posted_by
+       OR NEW.reversal_of IS DISTINCT FROM OLD.reversal_of
+       OR NEW.created_by  IS DISTINCT FROM OLD.created_by
+       OR NEW.created_at  IS DISTINCT FROM OLD.created_at
+    THEN
+        RAISE EXCEPTION 'cannot modify posted journal header (only reversed_by may change)'
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER gl_journals_header_immutable
+    BEFORE UPDATE ON gl_journals
+    FOR EACH ROW EXECUTE FUNCTION gl_journal_header_immutable();
+
+-- Control-account guard: manual JEs cannot touch AR / AP / Inventory etc.
+-- Sub-ledger postings (source_type != 'manual') are allowed.
+CREATE OR REPLACE FUNCTION gl_block_manual_control_writes() RETURNS trigger AS $$
+DECLARE
+    j_source_type text;
+    a_is_control  boolean;
+BEGIN
+    IF current_setting('app.bypass_lock', true) = 'on' THEN RETURN NEW; END IF;
+    SELECT source_type INTO j_source_type FROM gl_journals  WHERE id = NEW.journal_id;
+    SELECT is_control  INTO a_is_control  FROM gl_accounts WHERE id = NEW.account_id;
+    IF a_is_control = true AND j_source_type = 'manual' THEN
+        RAISE EXCEPTION 'manual JE cannot post to control account %; use the originating sub-ledger event',
+            NEW.account_id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER gl_lines_block_manual_control
+    BEFORE INSERT ON gl_journal_lines
+    FOR EACH ROW EXECUTE FUNCTION gl_block_manual_control_writes();
 
 -- ============================================================================
 -- SEED: roles_permissions
