@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Badge, Button, Card, Input, Money, Spinner } from '../components/ui';
 import { api } from '../lib/api';
@@ -24,6 +24,7 @@ interface Product {
 }
 
 function ProductsList() {
+  const navigate = useNavigate();
   const [q, setQ] = useState('');
   const { data, isLoading } = useQuery({
     queryKey: ['products', q],
@@ -77,7 +78,11 @@ function ProductsList() {
               </thead>
               <tbody>
                 {data?.items.map((p) => (
-                  <tr key={p.id} className="border-t border-slate-200">
+                  <tr
+                    key={p.id}
+                    onClick={() => navigate({ to: '/products/$id', params: { id: p.id } })}
+                    className="cursor-pointer border-t border-slate-200 hover:bg-slate-100/70"
+                  >
                     <td className="py-1.5 font-mono text-xs text-slate-600">{p.sku}</td>
                     <td className="text-slate-800">{p.name}</td>
                     <td className="text-slate-600">{p.brand_name}</td>

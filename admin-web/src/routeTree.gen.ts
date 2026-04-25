@@ -14,6 +14,8 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppAuditRouteImport } from './routes/_app.audit'
 import { Route as AppApprovalsRouteImport } from './routes/_app.approvals'
+import { Route as AppWarehousesIndexRouteImport } from './routes/_app.warehouses.index'
+import { Route as AppUsersIndexRouteImport } from './routes/_app.users.index'
 import { Route as AppProductsIndexRouteImport } from './routes/_app.products.index'
 import { Route as AppPriceListsIndexRouteImport } from './routes/_app.price-lists.index'
 import { Route as AppPaymentsIndexRouteImport } from './routes/_app.payments.index'
@@ -21,7 +23,10 @@ import { Route as AppOrdersIndexRouteImport } from './routes/_app.orders.index'
 import { Route as AppInvoicesIndexRouteImport } from './routes/_app.invoices.index'
 import { Route as AppInventoryIndexRouteImport } from './routes/_app.inventory.index'
 import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
+import { Route as AppWarehousesIdRouteImport } from './routes/_app.warehouses.$id'
+import { Route as AppUsersIdRouteImport } from './routes/_app.users.$id'
 import { Route as AppProductsNewRouteImport } from './routes/_app.products.new'
+import { Route as AppProductsIdRouteImport } from './routes/_app.products.$id'
 import { Route as AppPriceListsNewRouteImport } from './routes/_app.price-lists.new'
 import { Route as AppPriceListsIdRouteImport } from './routes/_app.price-lists.$id'
 import { Route as AppPaymentsNewRouteImport } from './routes/_app.payments.new'
@@ -59,6 +64,16 @@ const AppApprovalsRoute = AppApprovalsRouteImport.update({
   path: '/approvals',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWarehousesIndexRoute = AppWarehousesIndexRouteImport.update({
+  id: '/warehouses/',
+  path: '/warehouses/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
   id: '/products/',
   path: '/products/',
@@ -94,9 +109,24 @@ const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   path: '/customers/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWarehousesIdRoute = AppWarehousesIdRouteImport.update({
+  id: '/warehouses/$id',
+  path: '/warehouses/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUsersIdRoute = AppUsersIdRouteImport.update({
+  id: '/users/$id',
+  path: '/users/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProductsNewRoute = AppProductsNewRouteImport.update({
   id: '/products/new',
   path: '/products/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProductsIdRoute = AppProductsIdRouteImport.update({
+  id: '/products/$id',
+  path: '/products/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPriceListsNewRoute = AppPriceListsNewRouteImport.update({
@@ -177,7 +207,10 @@ export interface FileRoutesByFullPath {
   '/payments/new': typeof AppPaymentsNewRoute
   '/price-lists/$id': typeof AppPriceListsIdRoute
   '/price-lists/new': typeof AppPriceListsNewRoute
+  '/products/$id': typeof AppProductsIdRoute
   '/products/new': typeof AppProductsNewRoute
+  '/users/$id': typeof AppUsersIdRoute
+  '/warehouses/$id': typeof AppWarehousesIdRoute
   '/customers/': typeof AppCustomersIndexRoute
   '/inventory/': typeof AppInventoryIndexRoute
   '/invoices/': typeof AppInvoicesIndexRoute
@@ -185,6 +218,8 @@ export interface FileRoutesByFullPath {
   '/payments/': typeof AppPaymentsIndexRoute
   '/price-lists/': typeof AppPriceListsIndexRoute
   '/products/': typeof AppProductsIndexRoute
+  '/users/': typeof AppUsersIndexRoute
+  '/warehouses/': typeof AppWarehousesIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -203,7 +238,10 @@ export interface FileRoutesByTo {
   '/payments/new': typeof AppPaymentsNewRoute
   '/price-lists/$id': typeof AppPriceListsIdRoute
   '/price-lists/new': typeof AppPriceListsNewRoute
+  '/products/$id': typeof AppProductsIdRoute
   '/products/new': typeof AppProductsNewRoute
+  '/users/$id': typeof AppUsersIdRoute
+  '/warehouses/$id': typeof AppWarehousesIdRoute
   '/customers': typeof AppCustomersIndexRoute
   '/inventory': typeof AppInventoryIndexRoute
   '/invoices': typeof AppInvoicesIndexRoute
@@ -211,6 +249,8 @@ export interface FileRoutesByTo {
   '/payments': typeof AppPaymentsIndexRoute
   '/price-lists': typeof AppPriceListsIndexRoute
   '/products': typeof AppProductsIndexRoute
+  '/users': typeof AppUsersIndexRoute
+  '/warehouses': typeof AppWarehousesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -231,7 +271,10 @@ export interface FileRoutesById {
   '/_app/payments/new': typeof AppPaymentsNewRoute
   '/_app/price-lists/$id': typeof AppPriceListsIdRoute
   '/_app/price-lists/new': typeof AppPriceListsNewRoute
+  '/_app/products/$id': typeof AppProductsIdRoute
   '/_app/products/new': typeof AppProductsNewRoute
+  '/_app/users/$id': typeof AppUsersIdRoute
+  '/_app/warehouses/$id': typeof AppWarehousesIdRoute
   '/_app/customers/': typeof AppCustomersIndexRoute
   '/_app/inventory/': typeof AppInventoryIndexRoute
   '/_app/invoices/': typeof AppInvoicesIndexRoute
@@ -239,6 +282,8 @@ export interface FileRoutesById {
   '/_app/payments/': typeof AppPaymentsIndexRoute
   '/_app/price-lists/': typeof AppPriceListsIndexRoute
   '/_app/products/': typeof AppProductsIndexRoute
+  '/_app/users/': typeof AppUsersIndexRoute
+  '/_app/warehouses/': typeof AppWarehousesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -259,7 +304,10 @@ export interface FileRouteTypes {
     | '/payments/new'
     | '/price-lists/$id'
     | '/price-lists/new'
+    | '/products/$id'
     | '/products/new'
+    | '/users/$id'
+    | '/warehouses/$id'
     | '/customers/'
     | '/inventory/'
     | '/invoices/'
@@ -267,6 +315,8 @@ export interface FileRouteTypes {
     | '/payments/'
     | '/price-lists/'
     | '/products/'
+    | '/users/'
+    | '/warehouses/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -285,7 +335,10 @@ export interface FileRouteTypes {
     | '/payments/new'
     | '/price-lists/$id'
     | '/price-lists/new'
+    | '/products/$id'
     | '/products/new'
+    | '/users/$id'
+    | '/warehouses/$id'
     | '/customers'
     | '/inventory'
     | '/invoices'
@@ -293,6 +346,8 @@ export interface FileRouteTypes {
     | '/payments'
     | '/price-lists'
     | '/products'
+    | '/users'
+    | '/warehouses'
   id:
     | '__root__'
     | '/_app'
@@ -312,7 +367,10 @@ export interface FileRouteTypes {
     | '/_app/payments/new'
     | '/_app/price-lists/$id'
     | '/_app/price-lists/new'
+    | '/_app/products/$id'
     | '/_app/products/new'
+    | '/_app/users/$id'
+    | '/_app/warehouses/$id'
     | '/_app/customers/'
     | '/_app/inventory/'
     | '/_app/invoices/'
@@ -320,6 +378,8 @@ export interface FileRouteTypes {
     | '/_app/payments/'
     | '/_app/price-lists/'
     | '/_app/products/'
+    | '/_app/users/'
+    | '/_app/warehouses/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -362,6 +422,20 @@ declare module '@tanstack/react-router' {
       path: '/approvals'
       fullPath: '/approvals'
       preLoaderRoute: typeof AppApprovalsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/warehouses/': {
+      id: '/_app/warehouses/'
+      path: '/warehouses'
+      fullPath: '/warehouses/'
+      preLoaderRoute: typeof AppWarehousesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/users/': {
+      id: '/_app/users/'
+      path: '/users'
+      fullPath: '/users/'
+      preLoaderRoute: typeof AppUsersIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/products/': {
@@ -413,11 +487,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomersIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/warehouses/$id': {
+      id: '/_app/warehouses/$id'
+      path: '/warehouses/$id'
+      fullPath: '/warehouses/$id'
+      preLoaderRoute: typeof AppWarehousesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/users/$id': {
+      id: '/_app/users/$id'
+      path: '/users/$id'
+      fullPath: '/users/$id'
+      preLoaderRoute: typeof AppUsersIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/products/new': {
       id: '/_app/products/new'
       path: '/products/new'
       fullPath: '/products/new'
       preLoaderRoute: typeof AppProductsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/products/$id': {
+      id: '/_app/products/$id'
+      path: '/products/$id'
+      fullPath: '/products/$id'
+      preLoaderRoute: typeof AppProductsIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/price-lists/new': {
@@ -523,7 +618,10 @@ interface AppRouteChildren {
   AppPaymentsNewRoute: typeof AppPaymentsNewRoute
   AppPriceListsIdRoute: typeof AppPriceListsIdRoute
   AppPriceListsNewRoute: typeof AppPriceListsNewRoute
+  AppProductsIdRoute: typeof AppProductsIdRoute
   AppProductsNewRoute: typeof AppProductsNewRoute
+  AppUsersIdRoute: typeof AppUsersIdRoute
+  AppWarehousesIdRoute: typeof AppWarehousesIdRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
   AppInventoryIndexRoute: typeof AppInventoryIndexRoute
   AppInvoicesIndexRoute: typeof AppInvoicesIndexRoute
@@ -531,6 +629,8 @@ interface AppRouteChildren {
   AppPaymentsIndexRoute: typeof AppPaymentsIndexRoute
   AppPriceListsIndexRoute: typeof AppPriceListsIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
+  AppUsersIndexRoute: typeof AppUsersIndexRoute
+  AppWarehousesIndexRoute: typeof AppWarehousesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -549,7 +649,10 @@ const AppRouteChildren: AppRouteChildren = {
   AppPaymentsNewRoute: AppPaymentsNewRoute,
   AppPriceListsIdRoute: AppPriceListsIdRoute,
   AppPriceListsNewRoute: AppPriceListsNewRoute,
+  AppProductsIdRoute: AppProductsIdRoute,
   AppProductsNewRoute: AppProductsNewRoute,
+  AppUsersIdRoute: AppUsersIdRoute,
+  AppWarehousesIdRoute: AppWarehousesIdRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
   AppInventoryIndexRoute: AppInventoryIndexRoute,
   AppInvoicesIndexRoute: AppInvoicesIndexRoute,
@@ -557,6 +660,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppPaymentsIndexRoute: AppPaymentsIndexRoute,
   AppPriceListsIndexRoute: AppPriceListsIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
+  AppUsersIndexRoute: AppUsersIndexRoute,
+  AppWarehousesIndexRoute: AppWarehousesIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
