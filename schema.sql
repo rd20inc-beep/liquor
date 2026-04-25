@@ -880,10 +880,14 @@ CREATE INDEX audit_org_ts  ON audit_log(org_id, ts);
 
 -- Per-org, per-doc-type, per-year counters for human-readable numbers
 -- (e.g. SO-26-00042, INV-26-00001, C-00017).
+-- Allocation MUST go through nextDocNo() in services/doc-numbers.ts which uses
+-- INSERT ... ON CONFLICT DO UPDATE SET seq = seq + 1 RETURNING seq. That UPSERT
+-- is atomic in Postgres (row lock during DO UPDATE) so concurrent callers never
+-- collide. Do NOT use a naive read-modify-write pattern.
 CREATE TABLE doc_counters (
     org_id    uuid NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
-    doc_type  text NOT NULL,       -- 'order' | 'invoice' | 'receipt' | 'credit_note' | 'customer'
-    year      integer NOT NULL,    -- 2-digit YY (customer counters use 0 to skip year)
+    doc_type  text NOT NULL,       -- 'order' | 'invoice' | 'receipt' | 'credit_note' | 'customer' | 'journal'
+    year      integer NOT NULL,    -- 2-digit YY (customer counters use 0 for lifetime sequence)
     seq       integer NOT NULL DEFAULT 0,
     PRIMARY KEY (org_id, doc_type, year)
 );
