@@ -10,6 +10,7 @@ import metricsPlugin from './plugins/metrics.js';
 import rbacPlugin from './plugins/rbac.js';
 import requestId from './plugins/request-id.js';
 import adminRoutes from './routes/admin.js';
+import apRoutes from './routes/ap.js';
 import approvalRoutes from './routes/approvals.js';
 import auditRoutes from './routes/audit.js';
 import authRoutes from './routes/auth.js';
@@ -89,6 +90,7 @@ export async function buildServer() {
       await api.register(paymentRoutes);
       await api.register(paymentTermRoutes);
       await api.register(glRoutes);
+      await api.register(apRoutes);
       await api.register(adminRoutes);
     },
     { prefix: '/v1' },

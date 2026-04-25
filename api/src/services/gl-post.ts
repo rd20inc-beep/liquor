@@ -398,6 +398,116 @@ export async function postReceiptToLedger(
   });
 }
 
+export async function postBillToLedger(
+  tx: Sql,
+  args: {
+    orgId: string;
+    userId: string;
+    billId: string;
+    billNo: string;
+    billDate: string;
+    /** GL account to debit (the expense category's account, or override). */
+    expenseAccountCode: string;
+    amount: number;
+    vendorRef: string | null;
+  },
+): Promise<void> {
+  if (args.amount <= 0) return;
+  await postJournal(tx, {
+    orgId: args.orgId,
+    userId: args.userId,
+    jeDate: args.billDate,
+    sourceType: 'bill',
+    sourceId: args.billId,
+    memo: `Bill ${args.billNo}${args.vendorRef ? ` (vendor ref ${args.vendorRef})` : ''}`,
+    lines: [
+      {
+        account_code: args.expenseAccountCode,
+        debit: args.amount,
+        memo: `Bill ${args.billNo}`,
+      },
+      {
+        account_code: '2100', // Accounts Payable
+        credit: args.amount,
+        memo: `Bill ${args.billNo}`,
+      },
+    ],
+  });
+}
+
+export async function postBillPaymentToLedger(
+  tx: Sql,
+  args: {
+    orgId: string;
+    userId: string;
+    paymentId: string;
+    paymentNo: string;
+    paymentDate: string;
+    billNo: string;
+    payAccountCode: string;
+    amount: number;
+  },
+): Promise<void> {
+  if (args.amount <= 0) return;
+  await postJournal(tx, {
+    orgId: args.orgId,
+    userId: args.userId,
+    jeDate: args.paymentDate,
+    sourceType: 'bill_payment',
+    sourceId: args.paymentId,
+    memo: `Bill payment ${args.paymentNo} for ${args.billNo}`,
+    lines: [
+      {
+        account_code: '2100', // AP — settle the payable
+        debit: args.amount,
+        memo: `Settle ${args.billNo}`,
+      },
+      {
+        account_code: args.payAccountCode,
+        credit: args.amount,
+        memo: `Payment ${args.paymentNo}`,
+      },
+    ],
+  });
+}
+
+export async function postExpenseToLedger(
+  tx: Sql,
+  args: {
+    orgId: string;
+    userId: string;
+    expenseId: string;
+    expenseNo: string;
+    expenseDate: string;
+    expenseAccountCode: string;
+    payAccountCode: string;
+    amount: number;
+    description: string | null;
+  },
+): Promise<void> {
+  if (args.amount <= 0) return;
+  await postJournal(tx, {
+    orgId: args.orgId,
+    userId: args.userId,
+    jeDate: args.expenseDate,
+    sourceType: 'expense',
+    sourceId: args.expenseId,
+    memo: `Expense ${args.expenseNo}${args.description ? ` — ${args.description}` : ''}`,
+    lines: [
+      {
+        account_code: args.expenseAccountCode,
+        debit: args.amount,
+        memo: args.description ?? `Expense ${args.expenseNo}`,
+      },
+      {
+        account_code: args.payAccountCode,
+        credit: args.amount,
+        memo: `Paid via ${args.payAccountCode}`,
+      },
+    ],
+  });
+}
+
 export async function postAdjustmentToLedger(
   tx: Sql,
   args: {

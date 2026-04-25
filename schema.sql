@@ -103,6 +103,8 @@ CREATE TABLE users (
 CREATE INDEX users_org_id ON users(org_id);
 -- Unique login_id globally (nullable so existing rows without a login remain valid)
 CREATE UNIQUE INDEX users_login_id_unique ON users(login_id) WHERE login_id IS NOT NULL;
+-- Email unique per org (multiple NULLs allowed)
+CREATE UNIQUE INDEX users_org_email_unique ON users(org_id, email) WHERE email IS NOT NULL;
 
 CREATE TABLE user_devices (
     id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1443,6 +1445,55 @@ CREATE TRIGGER stock_movements_org_match
     BEFORE INSERT ON stock_movements
     FOR EACH ROW EXECUTE FUNCTION stock_movements_org_match();
 
+-- customers: route, payment_term, assigned_rep, assigned_collector, price_list
+-- must all belong to the customer's org. The audit flagged this as a multi-tenant
+-- hole — the FK only checks existence, not org match.
+CREATE OR REPLACE FUNCTION customers_org_match() RETURNS trigger AS $$
+DECLARE
+    other_org uuid;
+BEGIN
+    IF NEW.route_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM routes WHERE id = NEW.route_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'customers.route_id %: org % does not match customer org %',
+                NEW.route_id, other_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.payment_term_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM payment_terms WHERE id = NEW.payment_term_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'customers.payment_term_id %: org % does not match customer org %',
+                NEW.payment_term_id, other_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.assigned_rep_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM users WHERE id = NEW.assigned_rep_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'customers.assigned_rep_id %: org % does not match customer org %',
+                NEW.assigned_rep_id, other_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.assigned_collector_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM users WHERE id = NEW.assigned_collector_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'customers.assigned_collector_id %: org % does not match customer org %',
+                NEW.assigned_collector_id, other_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.price_list_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM price_lists WHERE id = NEW.price_list_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'customers.price_list_id %: org % does not match customer org %',
+                NEW.price_list_id, other_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER customers_org_match
+    BEFORE INSERT OR UPDATE ON customers
+    FOR EACH ROW EXECUTE FUNCTION customers_org_match();
+
 -- ar_ledger: validate running_balance = prior_running_balance + debit - credit
 -- per customer. The advisory lock serializes concurrent inserts for the same
 -- customer so two BEFORE-triggers can't read stale prior values. The app
@@ -1473,6 +1524,136 @@ END $$ LANGUAGE plpgsql;
 CREATE TRIGGER ar_ledger_validate_balance
     BEFORE INSERT ON ar_ledger
     FOR EACH ROW EXECUTE FUNCTION ar_ledger_validate_balance();
+
+-- ============================================================================
+-- ACCOUNTS PAYABLE + EXPENSES (GL Phase C)
+-- ============================================================================
+
+CREATE TABLE vendors (
+    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id        uuid NOT NULL REFERENCES orgs(id),
+    code          text NOT NULL,
+    name          text NOT NULL,
+    contact_phone text,
+    contact_email text,
+    address       text,
+    ntn           text,                              -- National Tax Number (PK)
+    notes         text,
+    active        boolean NOT NULL DEFAULT true,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    updated_at    timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (org_id, code)
+);
+CREATE INDEX vendors_org_id ON vendors(org_id);
+CREATE INDEX vendors_org_active ON vendors(org_id) WHERE active = true;
+
+CREATE TABLE expense_categories (
+    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id          uuid NOT NULL REFERENCES orgs(id),
+    code            text NOT NULL,
+    name            text NOT NULL,
+    -- The GL account this category posts to (e.g., '6210' Fuel).
+    -- Validated at insert time against gl_accounts; non-control postable only.
+    gl_account_code text NOT NULL,
+    active          boolean NOT NULL DEFAULT true,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (org_id, code)
+);
+CREATE INDEX expense_categories_org ON expense_categories(org_id);
+
+CREATE TYPE bill_status AS ENUM ('open', 'partial', 'paid', 'cancelled');
+
+-- Vendor invoices we owe. Posts DR Expense / CR AP (vendor subledger) on
+-- creation. Lock-from-birth like invoices so amount/account can't drift.
+CREATE TABLE bills (
+    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id              uuid NOT NULL REFERENCES orgs(id),
+    bill_no             text NOT NULL,
+    vendor_id           uuid NOT NULL REFERENCES vendors(id) ON DELETE RESTRICT,
+    vendor_ref          text,
+    bill_date           date NOT NULL,
+    due_date            date NOT NULL,
+    -- Either an expense category (typical) or a direct GL account code.
+    -- expense_category_id wins if set; gl_account_code is a free-form override
+    -- (e.g., a one-off bill not tied to a recurring category).
+    expense_category_id uuid REFERENCES expense_categories(id),
+    gl_account_code     text NOT NULL,
+    amount              numeric(14,2) NOT NULL CHECK (amount > 0),
+    outstanding         numeric(14,2) NOT NULL CHECK (outstanding >= 0),
+    status              bill_status NOT NULL DEFAULT 'open',
+    description         text,
+    attachment_url      text,
+    created_by          uuid NOT NULL REFERENCES users(id),
+    created_at          timestamptz NOT NULL DEFAULT now(),
+    updated_at          timestamptz NOT NULL DEFAULT now(),
+    locked_at           timestamptz,
+    UNIQUE (org_id, bill_no),
+    CHECK (outstanding <= amount)
+);
+CREATE INDEX bills_org_date           ON bills(org_id, bill_date DESC);
+CREATE INDEX bills_vendor             ON bills(vendor_id, bill_date DESC);
+CREATE INDEX bills_org_outstanding    ON bills(org_id, status) WHERE status IN ('open', 'partial');
+
+-- Bill payments (settle one or more bills). Many-to-one for now: each row
+-- settles exactly one bill (no multi-bill payment); revisit if needed.
+CREATE TABLE bill_payments (
+    id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id           uuid NOT NULL REFERENCES orgs(id),
+    payment_no       text NOT NULL,
+    bill_id          uuid NOT NULL REFERENCES bills(id) ON DELETE RESTRICT,
+    vendor_id        uuid NOT NULL REFERENCES vendors(id),
+    payment_date     date NOT NULL,
+    amount           numeric(14,2) NOT NULL CHECK (amount > 0),
+    pay_account_code text NOT NULL,                  -- '1010' / '1110' / '1210' etc.
+    reference        text,
+    notes            text,
+    created_by       uuid NOT NULL REFERENCES users(id),
+    created_at       timestamptz NOT NULL DEFAULT now(),
+    locked_at        timestamptz,
+    UNIQUE (org_id, payment_no)
+);
+CREATE INDEX bill_payments_org_date ON bill_payments(org_id, payment_date DESC);
+CREATE INDEX bill_payments_bill     ON bill_payments(bill_id);
+CREATE INDEX bill_payments_vendor   ON bill_payments(vendor_id, payment_date DESC);
+
+-- One-shot cash/bank expenses (no AP step — directly DR Expense, CR Cash/Bank).
+-- Use bills when a vendor will be paid later; expenses for petty cash spend.
+CREATE TABLE expenses (
+    id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id           uuid NOT NULL REFERENCES orgs(id),
+    expense_no       text NOT NULL,
+    expense_date     date NOT NULL,
+    amount           numeric(14,2) NOT NULL CHECK (amount > 0),
+    expense_category_id uuid REFERENCES expense_categories(id),
+    gl_account_code  text NOT NULL,                  -- DR side
+    pay_account_code text NOT NULL,                  -- CR side (1010/1110/1210/1220)
+    vendor_id        uuid REFERENCES vendors(id),    -- optional
+    vehicle_id       uuid REFERENCES vehicles(id),   -- optional, e.g. fuel
+    warehouse_id     uuid REFERENCES warehouses(id), -- optional
+    user_id          uuid REFERENCES users(id),      -- optional, e.g. claimant
+    description      text,
+    attachment_url   text,
+    created_by       uuid NOT NULL REFERENCES users(id),
+    created_at       timestamptz NOT NULL DEFAULT now(),
+    locked_at        timestamptz,
+    UNIQUE (org_id, expense_no)
+);
+CREATE INDEX expenses_org_date  ON expenses(org_id, expense_date DESC);
+CREATE INDEX expenses_category  ON expenses(expense_category_id);
+CREATE INDEX expenses_vendor    ON expenses(vendor_id) WHERE vendor_id IS NOT NULL;
+
+-- bills + bill_payments + expenses all use enforce_lock once they're locked.
+CREATE TRIGGER bills_lock_guard
+    BEFORE UPDATE OR DELETE ON bills FOR EACH ROW EXECUTE FUNCTION enforce_lock();
+CREATE TRIGGER bill_payments_lock_guard
+    BEFORE UPDATE OR DELETE ON bill_payments FOR EACH ROW EXECUTE FUNCTION enforce_lock();
+CREATE TRIGGER expenses_lock_guard
+    BEFORE UPDATE OR DELETE ON expenses FOR EACH ROW EXECUTE FUNCTION enforce_lock();
+
+CREATE TRIGGER vendors_updated_at
+    BEFORE UPDATE ON vendors FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER bills_updated_at
+    BEFORE UPDATE ON bills FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ============================================================================
 -- SEED: roles_permissions
@@ -1526,6 +1707,14 @@ INSERT INTO roles_permissions(role, resource, action, scope) VALUES
   ('accounts',  'stock',        'transfer', 'all'),
   ('accounts',  'gl',           'read',     'all'),
   ('accounts',  'gl',           'post',     'all'),
+  ('accounts',  'vendor',       'read',     'all'),
+  ('accounts',  'vendor',       'create',   'all'),
+  ('accounts',  'vendor',       'update',   'all'),
+  ('accounts',  'bill',         'read',     'all'),
+  ('accounts',  'bill',         'create',   'all'),
+  ('accounts',  'bill',         'pay',      'all'),
+  ('accounts',  'expense',      'read',     'all'),
+  ('accounts',  'expense',      'create',   'all'),
   -- Admin (wildcard)
   ('admin',     '*',            '*',        'all'),
   -- Owner

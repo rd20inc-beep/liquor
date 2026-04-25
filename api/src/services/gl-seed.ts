@@ -122,6 +122,32 @@ export async function seedDefaultCoa(sql: Sql, orgId: string): Promise<void> {
   }
 }
 
+/** Default expense categories mapped to GL accounts. Idempotent. */
+const DEFAULT_EXPENSE_CATEGORIES: Array<{ code: string; name: string; gl: string }> = [
+  { code: 'FUEL',         name: 'Fuel',                 gl: '6210' },
+  { code: 'VEH_MAINT',    name: 'Vehicle maintenance',  gl: '6220' },
+  { code: 'VEH_INS',      name: 'Vehicle insurance',    gl: '6230' },
+  { code: 'SALARY',       name: 'Salaries & wages',     gl: '6100' },
+  { code: 'RENT',         name: 'Rent',                 gl: '6300' },
+  { code: 'UTIL',         name: 'Utilities',            gl: '6400' },
+  { code: 'OFFICE',       name: 'Office expenses',      gl: '6500' },
+  { code: 'PROF_FEE',     name: 'Professional fees',    gl: '6600' },
+  { code: 'BANK',         name: 'Bank charges',         gl: '6700' },
+  { code: 'MISC',         name: 'Miscellaneous',        gl: '6900' },
+];
+
+export async function seedDefaultExpenseCategories(sql: Sql, orgId: string): Promise<void> {
+  for (const c of DEFAULT_EXPENSE_CATEGORIES) {
+    await sql`
+      INSERT INTO expense_categories (org_id, code, name, gl_account_code)
+      VALUES (${orgId}, ${c.code}, ${c.name}, ${c.gl})
+      ON CONFLICT (org_id, code) DO UPDATE SET
+        name            = EXCLUDED.name,
+        gl_account_code = EXCLUDED.gl_account_code
+    `;
+  }
+}
+
 /**
  * Open the cutover period (current month) so JEs can post immediately.
  * Idempotent.

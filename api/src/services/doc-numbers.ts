@@ -11,7 +11,7 @@ import type { Sql } from 'postgres';
 export async function nextDocNo(
   tx: Sql,
   orgId: string,
-  docType: 'order' | 'invoice' | 'receipt' | 'credit_note' | 'customer' | 'journal',
+  docType: 'order' | 'invoice' | 'receipt' | 'credit_note' | 'customer' | 'journal' | 'bill' | 'bill_payment' | 'expense' | 'vendor',
   year: number,
 ): Promise<number> {
   const [row] = await tx<Array<{ seq: number }>>`
@@ -72,4 +72,28 @@ export async function journalNo(tx: Sql, orgId: string): Promise<string> {
 export async function customerCode(tx: Sql, orgId: string): Promise<string> {
   const n = await nextDocNo(tx, orgId, 'customer', 0);
   return `${BRAND}-C${String(n).padStart(5, '0')}`;
+}
+
+/** Vendor codes — lifetime-sequential like customers: LQ-V00001 */
+export async function vendorCode(tx: Sql, orgId: string): Promise<string> {
+  const n = await nextDocNo(tx, orgId, 'vendor', 0);
+  return `${BRAND}-V${String(n).padStart(5, '0')}`;
+}
+
+export async function billNo(tx: Sql, orgId: string): Promise<string> {
+  const y = yy();
+  const n = await nextDocNo(tx, orgId, 'bill', y);
+  return `${BRAND}-BL${String(y).padStart(2, '0')}-${String(n).padStart(5, '0')}`;
+}
+
+export async function billPaymentNo(tx: Sql, orgId: string): Promise<string> {
+  const y = yy();
+  const n = await nextDocNo(tx, orgId, 'bill_payment', y);
+  return `${BRAND}-BP${String(y).padStart(2, '0')}-${String(n).padStart(5, '0')}`;
+}
+
+export async function expenseNo(tx: Sql, orgId: string): Promise<string> {
+  const y = yy();
+  const n = await nextDocNo(tx, orgId, 'expense', y);
+  return `${BRAND}-EX${String(y).padStart(2, '0')}-${String(n).padStart(5, '0')}`;
 }
