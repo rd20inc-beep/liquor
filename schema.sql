@@ -1,14 +1,26 @@
 -- ============================================================================
 -- Liquor Distribution OS — PostgreSQL schema v2 (refined)
--- Target: PostgreSQL 15+
+-- Target: PostgreSQL 16
 -- Conventions:
---   * UUID primary keys (pgcrypto gen_random_uuid)
+--   * UUID primary keys (pgcrypto gen_random_uuid); ledger tables use bigserial
 --   * timestamptz everywhere (server-side UTC, display in org timezone)
 --   * money as numeric(14,2); quantities as integer
---   * append-only tables: ar_ledger, stock_movements, audit_log
---   * soft state: customer_credit_state (materialized, refreshed on event)
---   * locks table + trigger gates mutations on posted entities
+--   * append-only tables: ar_ledger, stock_movements, audit_log,
+--     gl_journal_lines (post-posting; via gl_journal_immutable trigger)
+--   * audit_log is tamper-evident: forbid_mutation_strict — no DELETE even
+--     under app.bypass_lock
+--   * soft state: customer_credit_state (materialized, refreshed on event
+--     via services/credit-state.refreshCreditState)
+--   * locks: enforce_lock trigger gates UPDATE/DELETE on posted entities
+--     (invoices, payments, credit_notes); allocations inherit via
+--     enforce_allocation_lock; bypass via SET LOCAL app.bypass_lock = 'on'
 --   * all FK columns indexed (Postgres does NOT auto-index FKs)
+--   * audit_log.entity uses singular nouns ('sales_order', 'invoice', not the
+--     plural table name); keep this consistent across phases
+--   * roles_permissions: presence grants; absence denies (no wildcard fallback)
+--   * GL: posted journals are immutable (header + lines); reversals are new
+--     journals linked via reversal_of/reversed_by; period-closure enforced at
+--     the trigger level on transition to posted=true
 -- ============================================================================
 
 BEGIN;
@@ -313,6 +325,13 @@ CREATE TABLE warehouses (
 CREATE INDEX warehouses_org_id     ON warehouses(org_id);
 CREATE INDEX warehouses_vehicle_id ON warehouses(vehicle_id);
 
+-- stock_batches: qty_* mutations MUST hold a row lock (SELECT ... FOR UPDATE)
+-- before reading-then-writing any qty column. The CHECK constraints below are
+-- post-write and do NOT prevent classic read-then-write races under READ
+-- COMMITTED — two concurrent reservations could both pass independently and
+-- together violate qty_reserved + qty_damaged <= qty_physical. All callers in
+-- services/stock.ts and services/invoice.ts already use SELECT FOR UPDATE;
+-- preserve that convention in any new path that mutates these columns.
 CREATE TABLE stock_batches (
     id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id         uuid NOT NULL REFERENCES orgs(id),
@@ -721,15 +740,17 @@ CREATE INDEX returns_org_date    ON returns(org_id, received_at DESC);
 
 -- Van reconciliation (Phase 3)
 CREATE TABLE trip_reconciliation (
-    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    trip_id     uuid NOT NULL REFERENCES trips(id) ON DELETE CASCADE UNIQUE,
-    org_id      uuid NOT NULL REFERENCES orgs(id),
-    reconciled_by uuid REFERENCES users(id),
-    lines       jsonb NOT NULL,  -- [{product_id, loaded, sold, returned, remaining, variance}]
+    id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    trip_id        uuid NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    org_id         uuid NOT NULL REFERENCES orgs(id),
+    reconciled_by  uuid REFERENCES users(id),
+    lines          jsonb NOT NULL,  -- [{product_id, loaded, sold, returned, remaining, variance}]
     total_variance integer NOT NULL DEFAULT 0,
-    note        text,
-    created_at  timestamptz NOT NULL DEFAULT now()
+    note           text,
+    created_at     timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (trip_id)
 );
+CREATE INDEX trip_reconciliation_org ON trip_reconciliation(org_id);
 
 -- ============================================================================
 -- PURCHASE ORDERS (Phase 4, schema ready now)
@@ -915,19 +936,22 @@ CREATE INDEX integration_log_status ON integration_sync_log(integration, status)
 -- VIEWS
 -- ============================================================================
 
--- Sellable and free stock per (org, warehouse, product)
+-- Sellable and free stock per (org, warehouse, product). Includes ALL
+-- warehouses (active + deactivated) so reconciliation use cases can see
+-- frozen stock. Operational callers should filter w.active = true.
 CREATE VIEW v_stock_state AS
 SELECT
     sb.org_id,
     sb.warehouse_id,
     sb.product_id,
+    w.active                                                AS warehouse_active,
     SUM(sb.qty_physical)                                    AS physical,
     SUM(sb.qty_physical - sb.qty_damaged)                   AS sellable,
     SUM(sb.qty_physical - sb.qty_damaged - sb.qty_reserved) AS free,
     MIN(sb.expiry_date) FILTER (WHERE sb.qty_physical - sb.qty_damaged - sb.qty_reserved > 0) AS nearest_expiry
 FROM stock_batches sb
-JOIN warehouses w ON w.id = sb.warehouse_id AND w.active = true
-GROUP BY sb.org_id, sb.warehouse_id, sb.product_id;
+JOIN warehouses w ON w.id = sb.warehouse_id
+GROUP BY sb.org_id, sb.warehouse_id, sb.product_id, w.active;
 
 -- Current aging snapshot
 CREATE VIEW v_invoice_aging AS

@@ -205,7 +205,7 @@ export async function getStockState(
     near_expiry_days?: number;
   } = {},
 ) {
-  const conds = [sql`v.org_id = ${orgId}`];
+  const conds = [sql`v.org_id = ${orgId}`, sql`v.warehouse_active = true`];
   if (filters.warehouse_id) conds.push(sql`v.warehouse_id = ${filters.warehouse_id}`);
   if (filters.product_id) conds.push(sql`v.product_id   = ${filters.product_id}`);
   if (filters.below_reorder) {
