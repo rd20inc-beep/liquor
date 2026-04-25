@@ -269,7 +269,8 @@ CREATE TABLE promos (
     effective_from date NOT NULL,
     effective_to   date,
     active         boolean NOT NULL DEFAULT true,
-    CHECK (effective_to IS NULL OR effective_to >= effective_from)
+    CHECK (effective_to IS NULL OR effective_to >= effective_from),
+    UNIQUE (org_id, name)
 );
 CREATE INDEX promos_org_id ON promos(org_id);
 
@@ -369,7 +370,7 @@ CREATE INDEX cycle_counts_wh ON cycle_counts(warehouse_id);
 CREATE TABLE cycle_count_lines (
     cycle_id      uuid NOT NULL REFERENCES cycle_counts(id) ON DELETE CASCADE,
     batch_id      uuid NOT NULL REFERENCES stock_batches(id),
-    system_qty    integer NOT NULL,
+    system_qty    integer NOT NULL CHECK (system_qty >= 0),
     counted_qty   integer NOT NULL CHECK (counted_qty >= 0),
     variance      integer GENERATED ALWAYS AS (counted_qty - system_qty) STORED,
     note          text,
@@ -550,7 +551,14 @@ CREATE TABLE payments (
     locked_at            timestamptz,
     idempotency_key      text,
     UNIQUE (org_id, receipt_no),
-    UNIQUE (org_id, idempotency_key)
+    UNIQUE (org_id, idempotency_key),
+    -- Mode-specific required fields (defense-in-depth on top of app-level zod):
+    --   cheque  → cheque_date AND mode_ref (cheque number) required
+    --   bank    → mode_ref (transfer ref) required
+    --   upi     → mode_ref (transaction id) required
+    --   cash    → no extra requirements
+    CHECK (mode <> 'cheque' OR (cheque_date IS NOT NULL AND mode_ref IS NOT NULL)),
+    CHECK (mode NOT IN ('bank', 'upi') OR mode_ref IS NOT NULL)
 );
 CREATE INDEX payments_customer  ON payments(customer_id, collected_at DESC);
 CREATE INDEX payments_collector ON payments(collector_id, collected_at DESC);
@@ -1341,6 +1349,97 @@ END $$ LANGUAGE plpgsql;
 CREATE TRIGGER gl_lines_block_manual_control
     BEFORE INSERT ON gl_journal_lines
     FOR EACH ROW EXECUTE FUNCTION gl_block_manual_control_writes();
+
+-- Partial indexes on optional subledger refs — speed up product/batch queries
+-- without bloating the index when most lines have neither set.
+CREATE INDEX gl_lines_product ON gl_journal_lines(product_id) WHERE product_id IS NOT NULL;
+CREATE INDEX gl_lines_batch   ON gl_journal_lines(batch_id)   WHERE batch_id   IS NOT NULL;
+
+-- ============================================================================
+-- CROSS-TABLE INTEGRITY TRIGGERS
+-- ============================================================================
+
+-- stock_movements: every referenced entity (product, batch, warehouse, user)
+-- must belong to the movement's org. Defense in depth — the app uses scoped
+-- inserts but a trigger catches forgotten paths and direct SQL.
+CREATE OR REPLACE FUNCTION stock_movements_org_match() RETURNS trigger AS $$
+DECLARE
+    p_org uuid;
+    b_org uuid;
+    fwh_org uuid;
+    twh_org uuid;
+    u_org uuid;
+BEGIN
+    SELECT org_id INTO p_org   FROM products      WHERE id = NEW.product_id;
+    IF p_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'stock_movements: product % belongs to org % not %',
+            NEW.product_id, p_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.batch_id IS NOT NULL THEN
+        SELECT org_id INTO b_org FROM stock_batches WHERE id = NEW.batch_id;
+        IF b_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'stock_movements: batch % belongs to org % not %',
+                NEW.batch_id, b_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.from_wh_id IS NOT NULL THEN
+        SELECT org_id INTO fwh_org FROM warehouses WHERE id = NEW.from_wh_id;
+        IF fwh_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'stock_movements: from_wh % belongs to org % not %',
+                NEW.from_wh_id, fwh_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.to_wh_id IS NOT NULL THEN
+        SELECT org_id INTO twh_org FROM warehouses WHERE id = NEW.to_wh_id;
+        IF twh_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'stock_movements: to_wh % belongs to org % not %',
+                NEW.to_wh_id, twh_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.user_id IS NOT NULL THEN
+        SELECT org_id INTO u_org FROM users WHERE id = NEW.user_id;
+        IF u_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'stock_movements: user % belongs to org % not %',
+                NEW.user_id, u_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER stock_movements_org_match
+    BEFORE INSERT ON stock_movements
+    FOR EACH ROW EXECUTE FUNCTION stock_movements_org_match();
+
+-- ar_ledger: validate running_balance = prior_running_balance + debit - credit
+-- per customer. The advisory lock serializes concurrent inserts for the same
+-- customer so two BEFORE-triggers can't read stale prior values. The app
+-- (services/ar-ledger.ts) already takes its own lock; this is defense in depth.
+CREATE OR REPLACE FUNCTION ar_ledger_validate_balance() RETURNS trigger AS $$
+DECLARE
+    prior numeric(14,2);
+    expected numeric(14,2);
+BEGIN
+    PERFORM pg_advisory_xact_lock(
+        hashtext('ar_ledger.' || NEW.customer_id::text)
+    );
+    SELECT running_balance INTO prior
+        FROM ar_ledger
+        WHERE customer_id = NEW.customer_id
+        ORDER BY id DESC
+        LIMIT 1;
+    IF prior IS NULL THEN prior := 0; END IF;
+    expected := prior + NEW.debit - NEW.credit;
+    IF NEW.running_balance <> expected THEN
+        RAISE EXCEPTION 'ar_ledger running_balance % mismatch for customer % (prior=% dr=% cr=% expected=%)',
+            NEW.running_balance, NEW.customer_id, prior, NEW.debit, NEW.credit, expected
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER ar_ledger_validate_balance
+    BEFORE INSERT ON ar_ledger
+    FOR EACH ROW EXECUTE FUNCTION ar_ledger_validate_balance();
 
 -- ============================================================================
 -- SEED: roles_permissions
