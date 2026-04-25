@@ -1154,16 +1154,20 @@ CREATE INDEX gl_accounts_org_id ON gl_accounts(org_id);
 CREATE INDEX gl_accounts_parent ON gl_accounts(parent_id);
 
 CREATE TABLE gl_periods (
-    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id      uuid NOT NULL REFERENCES orgs(id),
-    year        int NOT NULL CHECK (year BETWEEN 2000 AND 2100),
-    month       int NOT NULL CHECK (month BETWEEN 1 AND 12),
-    status      gl_period_status NOT NULL DEFAULT 'open',
-    closed_at   timestamptz,
-    closed_by   uuid REFERENCES users(id),
+    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id       uuid NOT NULL REFERENCES orgs(id),
+    year         int NOT NULL CHECK (year BETWEEN 2000 AND 2100),
+    month        int NOT NULL CHECK (month BETWEEN 1 AND 12),
+    -- Generated start/end for ergonomic joins on gl_journals.je_date
+    period_start date GENERATED ALWAYS AS (make_date(year, month, 1)) STORED,
+    period_end   date GENERATED ALWAYS AS ((make_date(year, month, 1) + interval '1 month - 1 day')::date) STORED,
+    status       gl_period_status NOT NULL DEFAULT 'open',
+    closed_at    timestamptz,
+    closed_by    uuid REFERENCES users(id),
     UNIQUE (org_id, year, month)
 );
-CREATE INDEX gl_periods_org ON gl_periods(org_id, year, month);
+CREATE INDEX gl_periods_org           ON gl_periods(org_id, year, month);
+CREATE INDEX gl_periods_org_start     ON gl_periods(org_id, period_start);
 
 CREATE TABLE gl_journals (
     id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
