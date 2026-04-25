@@ -3,6 +3,11 @@ import { badRequest, conflict, notFound } from '../errors.js';
 import { appendLedger } from './ar-ledger.js';
 import { audit } from './audit.js';
 import { creditNoteNo, invoiceNo as generateInvoiceNo } from './doc-numbers.js';
+import {
+  postCogsToLedger,
+  postCreditNoteToLedger,
+  postInvoiceToLedger,
+} from './gl-post.js';
 
 export interface PostInvoiceInput {
   orgId: string;
@@ -101,12 +106,26 @@ export async function postInvoice(tx: Sql, input: PostInvoiceInput): Promise<Pos
   interface Alloc {
     batch_id: string;
     qty: number;
+    cost_price: number;
   }
   const perLineAllocations = new Map<string, Alloc[]>();
+  const cogsConsumption: Array<{
+    batch_id: string;
+    product_id: string;
+    qty: number;
+    cost_price: number;
+  }> = [];
 
   for (const line of lines) {
-    const batches = await tx<Array<{ id: string; qty_reserved: number; qty_physical: number }>>`
-      SELECT id, qty_reserved, qty_physical
+    const batches = await tx<
+      Array<{
+        id: string;
+        qty_reserved: number;
+        qty_physical: number;
+        cost_price: string;
+      }>
+    >`
+      SELECT id, qty_reserved, qty_physical, cost_price
       FROM stock_batches
       WHERE warehouse_id = ${warehouseId}
         AND product_id = ${line.product_id}
@@ -132,7 +151,14 @@ export async function postInvoice(tx: Sql, input: PostInvoiceInput): Promise<Pos
             qty_physical = qty_physical - ${take}
         WHERE id = ${b.id}
       `;
-      allocs.push({ batch_id: b.id, qty: take });
+      const cost = Number(b.cost_price);
+      allocs.push({ batch_id: b.id, qty: take, cost_price: cost });
+      cogsConsumption.push({
+        batch_id: b.id,
+        product_id: line.product_id,
+        qty: take,
+        cost_price: cost,
+      });
       remaining -= take;
     }
     perLineAllocations.set(line.id, allocs);
@@ -197,6 +223,26 @@ export async function postInvoice(tx: Sql, input: PostInvoiceInput): Promise<Pos
     debit: total,
     credit: 0,
     note: `Invoice ${invoiceNo}`,
+  });
+
+  // GL: AR + Sales (no tax — total includes tax_total rolled into revenue)
+  const todayIso = new Date().toISOString().slice(0, 10);
+  await postInvoiceToLedger(tx, {
+    orgId,
+    userId,
+    invoiceId,
+    invoiceNo,
+    invoiceDate: todayIso,
+    customerId: order.customer_id,
+    total,
+  });
+  await postCogsToLedger(tx, {
+    orgId,
+    userId,
+    invoiceId,
+    invoiceNo,
+    invoiceDate: todayIso,
+    consumption: cogsConsumption,
   });
 
   // Update order status
@@ -331,6 +377,17 @@ export async function applyCreditNote(
     debit: 0,
     credit: amount,
     note: `Credit note ${cnNo}: ${reason}`,
+  });
+
+  await postCreditNoteToLedger(tx, {
+    orgId,
+    userId,
+    creditNoteId: cnId,
+    cnNo,
+    cnDate: new Date().toISOString().slice(0, 10),
+    customerId,
+    amount,
+    reason,
   });
 
   await audit(

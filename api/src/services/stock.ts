@@ -1,6 +1,7 @@
 import type { Sql } from 'postgres';
 import { sql } from '../db.js';
 import { badRequest, conflict, notFound } from '../errors.js';
+import { postAdjustmentToLedger } from './gl-post.js';
 
 export interface BatchAllocation {
   batch_id: string;
@@ -119,12 +120,19 @@ export interface AdjustInput {
 export async function applyAdjustment(tx: Sql, orgId: string, userId: string, d: AdjustInput) {
   if (d.delta_qty === 0) throw badRequest('delta_qty cannot be zero');
   let batchId: string;
+  let costPrice = 0;
 
   if (d.batch_id) {
     const [b] = await tx<
-      Array<{ id: string; qty_physical: number; qty_damaged: number; qty_reserved: number }>
+      Array<{
+        id: string;
+        qty_physical: number;
+        qty_damaged: number;
+        qty_reserved: number;
+        cost_price: string;
+      }>
     >`
-      SELECT id, qty_physical, qty_damaged, qty_reserved
+      SELECT id, qty_physical, qty_damaged, qty_reserved, cost_price
       FROM stock_batches
       WHERE id = ${d.batch_id} AND org_id = ${orgId}
         AND warehouse_id = ${d.warehouse_id} AND product_id = ${d.product_id}
@@ -137,6 +145,7 @@ export async function applyAdjustment(tx: Sql, orgId: string, userId: string, d:
     }
     await tx`UPDATE stock_batches SET qty_physical = ${newPhysical} WHERE id = ${b.id}`;
     batchId = b.id;
+    costPrice = Number(b.cost_price);
   } else {
     if (d.delta_qty < 0) throw badRequest('Negative adjustment requires batch_id');
     const [b] = await tx<Array<{ id: string }>>`
@@ -145,6 +154,7 @@ export async function applyAdjustment(tx: Sql, orgId: string, userId: string, d:
       RETURNING id
     `;
     batchId = b!.id;
+    // costPrice remains 0 — no value to book; treat as qty-only adjustment.
   }
 
   const abs = Math.abs(d.delta_qty);
@@ -170,6 +180,17 @@ export async function applyAdjustment(tx: Sql, orgId: string, userId: string, d:
       ${sql.json({})}, ${sql.json({ delta_qty: d.delta_qty, reason: d.reason })}
     )
   `;
+
+  await postAdjustmentToLedger(tx, {
+    orgId,
+    userId,
+    batchId,
+    productId: d.product_id,
+    adjustDate: new Date().toISOString().slice(0, 10),
+    deltaQty: d.delta_qty,
+    costPrice,
+    reason: d.reason,
+  });
 
   return { batch_id: batchId, delta_qty: d.delta_qty };
 }

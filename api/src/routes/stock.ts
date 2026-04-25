@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { sql } from '../db.js';
 import { badRequest, conflict, notFound } from '../errors.js';
 import { rbacGuard } from '../plugins/rbac.js';
+import { postReceiptToLedger } from '../services/gl-post.js';
 import {
   InsufficientStockError,
   applyAdjustment,
@@ -150,6 +151,18 @@ export default async function stockRoutes(app: FastifyInstance) {
             ${req.user.sub}, ${d.note ?? null}
           )
         `;
+
+        await postReceiptToLedger(tx, {
+          orgId,
+          userId: req.user.sub,
+          batchId: batch!.id,
+          productId: d.product_id,
+          receiptDate: new Date().toISOString().slice(0, 10),
+          qty: d.qty,
+          costPrice: d.cost_price,
+          reason: d.reason,
+        });
+
         return batch;
       });
 

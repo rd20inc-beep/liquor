@@ -273,10 +273,10 @@ export default async function glRoutes(app: FastifyInstance) {
       const [head] = await tx<Array<{ id: string; journal_no: string }>>`
         INSERT INTO gl_journals (
           org_id, journal_no, je_date, source_type, memo,
-          posted, posted_at, posted_by, created_by
+          posted, created_by
         ) VALUES (
           ${orgId}, ${journal_no}, ${d.je_date}, 'manual', ${d.memo ?? null},
-          true, now(), ${userId}, ${userId}
+          false, ${userId}
         )
         RETURNING id, journal_no
       `;
@@ -295,6 +295,12 @@ export default async function glRoutes(app: FastifyInstance) {
           )
         `;
       }
+
+      await tx`
+        UPDATE gl_journals
+        SET posted = true, posted_at = now(), posted_by = ${userId}
+        WHERE id = ${head!.id}
+      `;
 
       await audit(
         {
@@ -362,11 +368,11 @@ export default async function glRoutes(app: FastifyInstance) {
         const [head] = await tx<Array<{ id: string; journal_no: string }>>`
           INSERT INTO gl_journals (
             org_id, journal_no, je_date, source_type, memo,
-            posted, posted_at, posted_by, created_by, reversal_of
+            posted, created_by, reversal_of
           ) VALUES (
             ${orgId}, ${journal_no}, ${body.data.je_date}, 'reversal',
             ${body.data.memo ?? `Reversal of ${orig.journal_no}`},
-            true, now(), ${userId}, ${userId}, ${id}
+            false, ${userId}, ${id}
           )
           RETURNING id, journal_no
         `;
@@ -386,7 +392,15 @@ export default async function glRoutes(app: FastifyInstance) {
           `;
         }
 
-        await tx`UPDATE gl_journals SET reversed_by = ${head!.id} WHERE id = ${id}`;
+        await tx`
+          UPDATE gl_journals
+          SET posted = true, posted_at = now(), posted_by = ${userId}
+          WHERE id = ${head!.id}
+        `;
+        await tx`
+          UPDATE gl_journals SET reversed_by = ${head!.id}
+          WHERE id = ${id}
+        `;
 
         await audit(
           {

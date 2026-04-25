@@ -4,6 +4,7 @@ import { badRequest, conflict, notFound } from '../errors.js';
 import { appendLedger } from './ar-ledger.js';
 import { audit } from './audit.js';
 import { receiptNo as generateReceiptNo } from './doc-numbers.js';
+import { postPaymentToLedger } from './gl-post.js';
 import { recomputeInvoiceStatus } from './invoice.js';
 
 export interface AllocationInput {
@@ -232,6 +233,17 @@ export async function recordPayment(
     });
     ledgerId = led.id;
     runningBalance = led.running_balance;
+
+    await postPaymentToLedger(tx, {
+      orgId,
+      userId,
+      paymentId,
+      receiptNo,
+      paymentDate: collectedAt.slice(0, 10),
+      customerId,
+      amount,
+      mode,
+    });
   }
 
   await audit(
@@ -318,6 +330,17 @@ export async function verifyCheque(
       debit: 0,
       credit: amount,
       note: `Payment ${p.receipt_no} (cheque) verified`,
+    });
+
+    await postPaymentToLedger(tx, {
+      orgId,
+      userId,
+      paymentId,
+      receiptNo: p.receipt_no,
+      paymentDate: new Date().toISOString().slice(0, 10),
+      customerId: p.customer_id,
+      amount,
+      mode: 'cheque',
     });
 
     // Lock the payment row
