@@ -778,7 +778,8 @@ CREATE INDEX po_lines_po ON purchase_order_lines(po_id);
 CREATE TABLE notifications (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id      uuid NOT NULL REFERENCES orgs(id),
-    user_id     uuid REFERENCES users(id) ON DELETE CASCADE,
+    -- SET NULL on user delete: preserve dispatch history for compliance review.
+    user_id     uuid REFERENCES users(id) ON DELETE SET NULL,
     channel     text NOT NULL,  -- push | sms | whatsapp | email
     template    text NOT NULL,
     context     jsonb NOT NULL DEFAULT '{}',
