@@ -42,9 +42,17 @@ import { Route as AppCustomersNewRouteImport } from './routes/_app.customers.new
 import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
 import { Route as AppAccountingTrialBalanceRouteImport } from './routes/_app.accounting.trial-balance'
 import { Route as AppAccountingCoaRouteImport } from './routes/_app.accounting.coa'
+import { Route as AppAccountingVendorsIndexRouteImport } from './routes/_app.accounting.vendors.index'
 import { Route as AppAccountingJournalsIndexRouteImport } from './routes/_app.accounting.journals.index'
+import { Route as AppAccountingExpensesIndexRouteImport } from './routes/_app.accounting.expenses.index'
+import { Route as AppAccountingBillsIndexRouteImport } from './routes/_app.accounting.bills.index'
+import { Route as AppAccountingVendorsNewRouteImport } from './routes/_app.accounting.vendors.new'
+import { Route as AppAccountingVendorsIdRouteImport } from './routes/_app.accounting.vendors.$id'
 import { Route as AppAccountingJournalsNewRouteImport } from './routes/_app.accounting.journals.new'
 import { Route as AppAccountingJournalsIdRouteImport } from './routes/_app.accounting.journals.$id'
+import { Route as AppAccountingExpensesNewRouteImport } from './routes/_app.accounting.expenses.new'
+import { Route as AppAccountingBillsNewRouteImport } from './routes/_app.accounting.bills.new'
+import { Route as AppAccountingBillsIdRouteImport } from './routes/_app.accounting.bills.$id'
 import { Route as AppAccountingAccountIdRouteImport } from './routes/_app.accounting.account.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -212,12 +220,39 @@ const AppAccountingCoaRoute = AppAccountingCoaRouteImport.update({
   path: '/accounting/coa',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAccountingVendorsIndexRoute =
+  AppAccountingVendorsIndexRouteImport.update({
+    id: '/accounting/vendors/',
+    path: '/accounting/vendors/',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppAccountingJournalsIndexRoute =
   AppAccountingJournalsIndexRouteImport.update({
     id: '/accounting/journals/',
     path: '/accounting/journals/',
     getParentRoute: () => AppRoute,
   } as any)
+const AppAccountingExpensesIndexRoute =
+  AppAccountingExpensesIndexRouteImport.update({
+    id: '/accounting/expenses/',
+    path: '/accounting/expenses/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingBillsIndexRoute = AppAccountingBillsIndexRouteImport.update({
+  id: '/accounting/bills/',
+  path: '/accounting/bills/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountingVendorsNewRoute = AppAccountingVendorsNewRouteImport.update({
+  id: '/accounting/vendors/new',
+  path: '/accounting/vendors/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountingVendorsIdRoute = AppAccountingVendorsIdRouteImport.update({
+  id: '/accounting/vendors/$id',
+  path: '/accounting/vendors/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAccountingJournalsNewRoute =
   AppAccountingJournalsNewRouteImport.update({
     id: '/accounting/journals/new',
@@ -227,6 +262,22 @@ const AppAccountingJournalsNewRoute =
 const AppAccountingJournalsIdRoute = AppAccountingJournalsIdRouteImport.update({
   id: '/accounting/journals/$id',
   path: '/accounting/journals/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountingExpensesNewRoute =
+  AppAccountingExpensesNewRouteImport.update({
+    id: '/accounting/expenses/new',
+    path: '/accounting/expenses/new',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingBillsNewRoute = AppAccountingBillsNewRouteImport.update({
+  id: '/accounting/bills/new',
+  path: '/accounting/bills/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountingBillsIdRoute = AppAccountingBillsIdRouteImport.update({
+  id: '/accounting/bills/$id',
+  path: '/accounting/bills/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAccountingAccountIdRoute = AppAccountingAccountIdRouteImport.update({
@@ -269,9 +320,17 @@ export interface FileRoutesByFullPath {
   '/users/': typeof AppUsersIndexRoute
   '/warehouses/': typeof AppWarehousesIndexRoute
   '/accounting/account/$id': typeof AppAccountingAccountIdRoute
+  '/accounting/bills/$id': typeof AppAccountingBillsIdRoute
+  '/accounting/bills/new': typeof AppAccountingBillsNewRoute
+  '/accounting/expenses/new': typeof AppAccountingExpensesNewRoute
   '/accounting/journals/$id': typeof AppAccountingJournalsIdRoute
   '/accounting/journals/new': typeof AppAccountingJournalsNewRoute
+  '/accounting/vendors/$id': typeof AppAccountingVendorsIdRoute
+  '/accounting/vendors/new': typeof AppAccountingVendorsNewRoute
+  '/accounting/bills/': typeof AppAccountingBillsIndexRoute
+  '/accounting/expenses/': typeof AppAccountingExpensesIndexRoute
   '/accounting/journals/': typeof AppAccountingJournalsIndexRoute
+  '/accounting/vendors/': typeof AppAccountingVendorsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -307,9 +366,17 @@ export interface FileRoutesByTo {
   '/users': typeof AppUsersIndexRoute
   '/warehouses': typeof AppWarehousesIndexRoute
   '/accounting/account/$id': typeof AppAccountingAccountIdRoute
+  '/accounting/bills/$id': typeof AppAccountingBillsIdRoute
+  '/accounting/bills/new': typeof AppAccountingBillsNewRoute
+  '/accounting/expenses/new': typeof AppAccountingExpensesNewRoute
   '/accounting/journals/$id': typeof AppAccountingJournalsIdRoute
   '/accounting/journals/new': typeof AppAccountingJournalsNewRoute
+  '/accounting/vendors/$id': typeof AppAccountingVendorsIdRoute
+  '/accounting/vendors/new': typeof AppAccountingVendorsNewRoute
+  '/accounting/bills': typeof AppAccountingBillsIndexRoute
+  '/accounting/expenses': typeof AppAccountingExpensesIndexRoute
   '/accounting/journals': typeof AppAccountingJournalsIndexRoute
+  '/accounting/vendors': typeof AppAccountingVendorsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -347,9 +414,17 @@ export interface FileRoutesById {
   '/_app/users/': typeof AppUsersIndexRoute
   '/_app/warehouses/': typeof AppWarehousesIndexRoute
   '/_app/accounting/account/$id': typeof AppAccountingAccountIdRoute
+  '/_app/accounting/bills/$id': typeof AppAccountingBillsIdRoute
+  '/_app/accounting/bills/new': typeof AppAccountingBillsNewRoute
+  '/_app/accounting/expenses/new': typeof AppAccountingExpensesNewRoute
   '/_app/accounting/journals/$id': typeof AppAccountingJournalsIdRoute
   '/_app/accounting/journals/new': typeof AppAccountingJournalsNewRoute
+  '/_app/accounting/vendors/$id': typeof AppAccountingVendorsIdRoute
+  '/_app/accounting/vendors/new': typeof AppAccountingVendorsNewRoute
+  '/_app/accounting/bills/': typeof AppAccountingBillsIndexRoute
+  '/_app/accounting/expenses/': typeof AppAccountingExpensesIndexRoute
   '/_app/accounting/journals/': typeof AppAccountingJournalsIndexRoute
+  '/_app/accounting/vendors/': typeof AppAccountingVendorsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -387,9 +462,17 @@ export interface FileRouteTypes {
     | '/users/'
     | '/warehouses/'
     | '/accounting/account/$id'
+    | '/accounting/bills/$id'
+    | '/accounting/bills/new'
+    | '/accounting/expenses/new'
     | '/accounting/journals/$id'
     | '/accounting/journals/new'
+    | '/accounting/vendors/$id'
+    | '/accounting/vendors/new'
+    | '/accounting/bills/'
+    | '/accounting/expenses/'
     | '/accounting/journals/'
+    | '/accounting/vendors/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -425,9 +508,17 @@ export interface FileRouteTypes {
     | '/users'
     | '/warehouses'
     | '/accounting/account/$id'
+    | '/accounting/bills/$id'
+    | '/accounting/bills/new'
+    | '/accounting/expenses/new'
     | '/accounting/journals/$id'
     | '/accounting/journals/new'
+    | '/accounting/vendors/$id'
+    | '/accounting/vendors/new'
+    | '/accounting/bills'
+    | '/accounting/expenses'
     | '/accounting/journals'
+    | '/accounting/vendors'
   id:
     | '__root__'
     | '/_app'
@@ -464,9 +555,17 @@ export interface FileRouteTypes {
     | '/_app/users/'
     | '/_app/warehouses/'
     | '/_app/accounting/account/$id'
+    | '/_app/accounting/bills/$id'
+    | '/_app/accounting/bills/new'
+    | '/_app/accounting/expenses/new'
     | '/_app/accounting/journals/$id'
     | '/_app/accounting/journals/new'
+    | '/_app/accounting/vendors/$id'
+    | '/_app/accounting/vendors/new'
+    | '/_app/accounting/bills/'
+    | '/_app/accounting/expenses/'
     | '/_app/accounting/journals/'
+    | '/_app/accounting/vendors/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -707,11 +806,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountingCoaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/accounting/vendors/': {
+      id: '/_app/accounting/vendors/'
+      path: '/accounting/vendors'
+      fullPath: '/accounting/vendors/'
+      preLoaderRoute: typeof AppAccountingVendorsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/accounting/journals/': {
       id: '/_app/accounting/journals/'
       path: '/accounting/journals'
       fullPath: '/accounting/journals/'
       preLoaderRoute: typeof AppAccountingJournalsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/expenses/': {
+      id: '/_app/accounting/expenses/'
+      path: '/accounting/expenses'
+      fullPath: '/accounting/expenses/'
+      preLoaderRoute: typeof AppAccountingExpensesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/bills/': {
+      id: '/_app/accounting/bills/'
+      path: '/accounting/bills'
+      fullPath: '/accounting/bills/'
+      preLoaderRoute: typeof AppAccountingBillsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/vendors/new': {
+      id: '/_app/accounting/vendors/new'
+      path: '/accounting/vendors/new'
+      fullPath: '/accounting/vendors/new'
+      preLoaderRoute: typeof AppAccountingVendorsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/vendors/$id': {
+      id: '/_app/accounting/vendors/$id'
+      path: '/accounting/vendors/$id'
+      fullPath: '/accounting/vendors/$id'
+      preLoaderRoute: typeof AppAccountingVendorsIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/accounting/journals/new': {
@@ -726,6 +860,27 @@ declare module '@tanstack/react-router' {
       path: '/accounting/journals/$id'
       fullPath: '/accounting/journals/$id'
       preLoaderRoute: typeof AppAccountingJournalsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/expenses/new': {
+      id: '/_app/accounting/expenses/new'
+      path: '/accounting/expenses/new'
+      fullPath: '/accounting/expenses/new'
+      preLoaderRoute: typeof AppAccountingExpensesNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/bills/new': {
+      id: '/_app/accounting/bills/new'
+      path: '/accounting/bills/new'
+      fullPath: '/accounting/bills/new'
+      preLoaderRoute: typeof AppAccountingBillsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/bills/$id': {
+      id: '/_app/accounting/bills/$id'
+      path: '/accounting/bills/$id'
+      fullPath: '/accounting/bills/$id'
+      preLoaderRoute: typeof AppAccountingBillsIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/accounting/account/$id': {
@@ -771,9 +926,17 @@ interface AppRouteChildren {
   AppUsersIndexRoute: typeof AppUsersIndexRoute
   AppWarehousesIndexRoute: typeof AppWarehousesIndexRoute
   AppAccountingAccountIdRoute: typeof AppAccountingAccountIdRoute
+  AppAccountingBillsIdRoute: typeof AppAccountingBillsIdRoute
+  AppAccountingBillsNewRoute: typeof AppAccountingBillsNewRoute
+  AppAccountingExpensesNewRoute: typeof AppAccountingExpensesNewRoute
   AppAccountingJournalsIdRoute: typeof AppAccountingJournalsIdRoute
   AppAccountingJournalsNewRoute: typeof AppAccountingJournalsNewRoute
+  AppAccountingVendorsIdRoute: typeof AppAccountingVendorsIdRoute
+  AppAccountingVendorsNewRoute: typeof AppAccountingVendorsNewRoute
+  AppAccountingBillsIndexRoute: typeof AppAccountingBillsIndexRoute
+  AppAccountingExpensesIndexRoute: typeof AppAccountingExpensesIndexRoute
   AppAccountingJournalsIndexRoute: typeof AppAccountingJournalsIndexRoute
+  AppAccountingVendorsIndexRoute: typeof AppAccountingVendorsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -809,9 +972,17 @@ const AppRouteChildren: AppRouteChildren = {
   AppUsersIndexRoute: AppUsersIndexRoute,
   AppWarehousesIndexRoute: AppWarehousesIndexRoute,
   AppAccountingAccountIdRoute: AppAccountingAccountIdRoute,
+  AppAccountingBillsIdRoute: AppAccountingBillsIdRoute,
+  AppAccountingBillsNewRoute: AppAccountingBillsNewRoute,
+  AppAccountingExpensesNewRoute: AppAccountingExpensesNewRoute,
   AppAccountingJournalsIdRoute: AppAccountingJournalsIdRoute,
   AppAccountingJournalsNewRoute: AppAccountingJournalsNewRoute,
+  AppAccountingVendorsIdRoute: AppAccountingVendorsIdRoute,
+  AppAccountingVendorsNewRoute: AppAccountingVendorsNewRoute,
+  AppAccountingBillsIndexRoute: AppAccountingBillsIndexRoute,
+  AppAccountingExpensesIndexRoute: AppAccountingExpensesIndexRoute,
   AppAccountingJournalsIndexRoute: AppAccountingJournalsIndexRoute,
+  AppAccountingVendorsIndexRoute: AppAccountingVendorsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

@@ -39,16 +39,41 @@ function AccountingHome() {
     queryKey: ['gl', 'journals', 'recent'],
     queryFn: () => api.get<{ items: Journal[] }>('/gl/journals?limit=10'),
   });
+  const vendorsQ = useQuery({
+    queryKey: ['vendors'],
+    queryFn: () => api.get<{ items: Array<{ outstanding_total: string; active: boolean }> }>('/vendors'),
+  });
+  const expensesQ = useQuery({
+    queryKey: ['expenses', 'recent'],
+    queryFn: () => api.get<{ items: Array<{ amount: string }> }>('/expenses?limit=200'),
+  });
 
   const periods = periodsQ.data?.items ?? [];
   const open = periods.filter((p) => p.status === 'open');
   const current = open[0] ?? periods[0] ?? null;
+  const apOutstanding = (vendorsQ.data?.items ?? []).reduce(
+    (s, v) => s + Number(v.outstanding_total),
+    0,
+  );
+  const expenseTotal = (expensesQ.data?.items ?? []).reduce(
+    (s, e) => s + Number(e.amount),
+    0,
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">Accounting</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link to="/accounting/vendors">
+            <Button variant="secondary">Vendors</Button>
+          </Link>
+          <Link to="/accounting/bills">
+            <Button variant="secondary">Bills</Button>
+          </Link>
+          <Link to="/accounting/expenses">
+            <Button variant="secondary">Expenses</Button>
+          </Link>
           <Link to="/accounting/coa">
             <Button variant="secondary">Chart of accounts</Button>
           </Link>
@@ -56,7 +81,7 @@ function AccountingHome() {
             <Button variant="secondary">Trial balance</Button>
           </Link>
           <Link to="/accounting/journals/new">
-            <Button>+ New journal entry</Button>
+            <Button>+ New JE</Button>
           </Link>
         </div>
       </div>
@@ -68,11 +93,29 @@ function AccountingHome() {
           sub={current?.status === 'open' ? 'open' : 'closed'}
           tone={current?.status === 'open' ? 'green' : 'amber'}
         />
-        <Tile label="Open periods" value={open.length} sub="includes current" tone="blue" />
         <Tile
-          label="Closed periods"
-          value={periods.filter((p) => p.status === 'closed').length}
-          sub="historical"
+          label="AP outstanding"
+          value={
+            vendorsQ.isLoading ? (
+              <Spinner />
+            ) : (
+              `PKR ${apOutstanding.toLocaleString('en-PK', { minimumFractionDigits: 0 })}`
+            )
+          }
+          sub={apOutstanding > 0 ? 'across vendors' : 'all settled'}
+          tone={apOutstanding > 0 ? 'amber' : 'green'}
+        />
+        <Tile
+          label="Expenses (last 200)"
+          value={
+            expensesQ.isLoading ? (
+              <Spinner />
+            ) : (
+              `PKR ${expenseTotal.toLocaleString('en-PK', { minimumFractionDigits: 0 })}`
+            )
+          }
+          sub="recent"
+          tone="blue"
         />
         <Tile
           label="Recent JEs"
