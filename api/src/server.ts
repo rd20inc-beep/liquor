@@ -24,6 +24,7 @@ import paymentRoutes from './routes/payments.js';
 import paymentTermRoutes from './routes/payment-terms.js';
 import priceListRoutes from './routes/price-lists.js';
 import productRoutes from './routes/products.js';
+import reportRoutes from './routes/reports.js';
 import routeRoutes from './routes/routes.js';
 import stockRoutes from './routes/stock.js';
 import userRoutes from './routes/users.js';
@@ -91,6 +92,7 @@ export async function buildServer() {
       await api.register(paymentTermRoutes);
       await api.register(glRoutes);
       await api.register(apRoutes);
+      await api.register(reportRoutes);
       await api.register(adminRoutes);
     },
     { prefix: '/v1' },

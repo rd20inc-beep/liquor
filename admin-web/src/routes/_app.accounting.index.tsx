@@ -86,6 +86,65 @@ function AccountingHome() {
         </div>
       </div>
 
+      <Card title="Reports">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <Link
+            to="/accounting/reports/balance-sheet"
+            className="group rounded-lg border border-slate-200 bg-white p-3 transition hover:border-indigo-400 hover:shadow-sm"
+          >
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
+              Balance sheet
+            </div>
+            <div className="text-xs text-slate-500">Assets / liabilities / equity at a date</div>
+          </Link>
+          <Link
+            to="/accounting/reports/profit-loss"
+            className="group rounded-lg border border-slate-200 bg-white p-3 transition hover:border-indigo-400 hover:shadow-sm"
+          >
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
+              Profit &amp; loss
+            </div>
+            <div className="text-xs text-slate-500">Revenue − COGS − expenses for a period</div>
+          </Link>
+          <Link
+            to="/accounting/reports/cash-activity"
+            className="group rounded-lg border border-slate-200 bg-white p-3 transition hover:border-indigo-400 hover:shadow-sm"
+          >
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
+              Cash activity
+            </div>
+            <div className="text-xs text-slate-500">Per-account opening / receipts / disbursements / closing</div>
+          </Link>
+          <Link
+            to="/accounting/reports/ar-aging"
+            className="group rounded-lg border border-slate-200 bg-white p-3 transition hover:border-indigo-400 hover:shadow-sm"
+          >
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
+              AR aging
+            </div>
+            <div className="text-xs text-slate-500">Customer outstanding by overdue bucket</div>
+          </Link>
+          <Link
+            to="/accounting/reports/ap-aging"
+            className="group rounded-lg border border-slate-200 bg-white p-3 transition hover:border-indigo-400 hover:shadow-sm"
+          >
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
+              AP aging
+            </div>
+            <div className="text-xs text-slate-500">Vendor outstanding by overdue bucket</div>
+          </Link>
+          <Link
+            to="/accounting/reports/reconciliation"
+            className="group rounded-lg border border-slate-200 bg-white p-3 transition hover:border-indigo-400 hover:shadow-sm"
+          >
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
+              Reconciliation
+            </div>
+            <div className="text-xs text-slate-500">Subledger totals vs GL control accounts</div>
+          </Link>
+        </div>
+      </Card>
+
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Tile
           label="Current period"

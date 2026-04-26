@@ -48,6 +48,12 @@ import { Route as AppAccountingExpensesIndexRouteImport } from './routes/_app.ac
 import { Route as AppAccountingBillsIndexRouteImport } from './routes/_app.accounting.bills.index'
 import { Route as AppAccountingVendorsNewRouteImport } from './routes/_app.accounting.vendors.new'
 import { Route as AppAccountingVendorsIdRouteImport } from './routes/_app.accounting.vendors.$id'
+import { Route as AppAccountingReportsReconciliationRouteImport } from './routes/_app.accounting.reports.reconciliation'
+import { Route as AppAccountingReportsProfitLossRouteImport } from './routes/_app.accounting.reports.profit-loss'
+import { Route as AppAccountingReportsCashActivityRouteImport } from './routes/_app.accounting.reports.cash-activity'
+import { Route as AppAccountingReportsBalanceSheetRouteImport } from './routes/_app.accounting.reports.balance-sheet'
+import { Route as AppAccountingReportsArAgingRouteImport } from './routes/_app.accounting.reports.ar-aging'
+import { Route as AppAccountingReportsApAgingRouteImport } from './routes/_app.accounting.reports.ap-aging'
 import { Route as AppAccountingJournalsNewRouteImport } from './routes/_app.accounting.journals.new'
 import { Route as AppAccountingJournalsIdRouteImport } from './routes/_app.accounting.journals.$id'
 import { Route as AppAccountingExpensesNewRouteImport } from './routes/_app.accounting.expenses.new'
@@ -253,6 +259,42 @@ const AppAccountingVendorsIdRoute = AppAccountingVendorsIdRouteImport.update({
   path: '/accounting/vendors/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAccountingReportsReconciliationRoute =
+  AppAccountingReportsReconciliationRouteImport.update({
+    id: '/accounting/reports/reconciliation',
+    path: '/accounting/reports/reconciliation',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingReportsProfitLossRoute =
+  AppAccountingReportsProfitLossRouteImport.update({
+    id: '/accounting/reports/profit-loss',
+    path: '/accounting/reports/profit-loss',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingReportsCashActivityRoute =
+  AppAccountingReportsCashActivityRouteImport.update({
+    id: '/accounting/reports/cash-activity',
+    path: '/accounting/reports/cash-activity',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingReportsBalanceSheetRoute =
+  AppAccountingReportsBalanceSheetRouteImport.update({
+    id: '/accounting/reports/balance-sheet',
+    path: '/accounting/reports/balance-sheet',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingReportsArAgingRoute =
+  AppAccountingReportsArAgingRouteImport.update({
+    id: '/accounting/reports/ar-aging',
+    path: '/accounting/reports/ar-aging',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAccountingReportsApAgingRoute =
+  AppAccountingReportsApAgingRouteImport.update({
+    id: '/accounting/reports/ap-aging',
+    path: '/accounting/reports/ap-aging',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppAccountingJournalsNewRoute =
   AppAccountingJournalsNewRouteImport.update({
     id: '/accounting/journals/new',
@@ -325,6 +367,12 @@ export interface FileRoutesByFullPath {
   '/accounting/expenses/new': typeof AppAccountingExpensesNewRoute
   '/accounting/journals/$id': typeof AppAccountingJournalsIdRoute
   '/accounting/journals/new': typeof AppAccountingJournalsNewRoute
+  '/accounting/reports/ap-aging': typeof AppAccountingReportsApAgingRoute
+  '/accounting/reports/ar-aging': typeof AppAccountingReportsArAgingRoute
+  '/accounting/reports/balance-sheet': typeof AppAccountingReportsBalanceSheetRoute
+  '/accounting/reports/cash-activity': typeof AppAccountingReportsCashActivityRoute
+  '/accounting/reports/profit-loss': typeof AppAccountingReportsProfitLossRoute
+  '/accounting/reports/reconciliation': typeof AppAccountingReportsReconciliationRoute
   '/accounting/vendors/$id': typeof AppAccountingVendorsIdRoute
   '/accounting/vendors/new': typeof AppAccountingVendorsNewRoute
   '/accounting/bills/': typeof AppAccountingBillsIndexRoute
@@ -371,6 +419,12 @@ export interface FileRoutesByTo {
   '/accounting/expenses/new': typeof AppAccountingExpensesNewRoute
   '/accounting/journals/$id': typeof AppAccountingJournalsIdRoute
   '/accounting/journals/new': typeof AppAccountingJournalsNewRoute
+  '/accounting/reports/ap-aging': typeof AppAccountingReportsApAgingRoute
+  '/accounting/reports/ar-aging': typeof AppAccountingReportsArAgingRoute
+  '/accounting/reports/balance-sheet': typeof AppAccountingReportsBalanceSheetRoute
+  '/accounting/reports/cash-activity': typeof AppAccountingReportsCashActivityRoute
+  '/accounting/reports/profit-loss': typeof AppAccountingReportsProfitLossRoute
+  '/accounting/reports/reconciliation': typeof AppAccountingReportsReconciliationRoute
   '/accounting/vendors/$id': typeof AppAccountingVendorsIdRoute
   '/accounting/vendors/new': typeof AppAccountingVendorsNewRoute
   '/accounting/bills': typeof AppAccountingBillsIndexRoute
@@ -419,6 +473,12 @@ export interface FileRoutesById {
   '/_app/accounting/expenses/new': typeof AppAccountingExpensesNewRoute
   '/_app/accounting/journals/$id': typeof AppAccountingJournalsIdRoute
   '/_app/accounting/journals/new': typeof AppAccountingJournalsNewRoute
+  '/_app/accounting/reports/ap-aging': typeof AppAccountingReportsApAgingRoute
+  '/_app/accounting/reports/ar-aging': typeof AppAccountingReportsArAgingRoute
+  '/_app/accounting/reports/balance-sheet': typeof AppAccountingReportsBalanceSheetRoute
+  '/_app/accounting/reports/cash-activity': typeof AppAccountingReportsCashActivityRoute
+  '/_app/accounting/reports/profit-loss': typeof AppAccountingReportsProfitLossRoute
+  '/_app/accounting/reports/reconciliation': typeof AppAccountingReportsReconciliationRoute
   '/_app/accounting/vendors/$id': typeof AppAccountingVendorsIdRoute
   '/_app/accounting/vendors/new': typeof AppAccountingVendorsNewRoute
   '/_app/accounting/bills/': typeof AppAccountingBillsIndexRoute
@@ -467,6 +527,12 @@ export interface FileRouteTypes {
     | '/accounting/expenses/new'
     | '/accounting/journals/$id'
     | '/accounting/journals/new'
+    | '/accounting/reports/ap-aging'
+    | '/accounting/reports/ar-aging'
+    | '/accounting/reports/balance-sheet'
+    | '/accounting/reports/cash-activity'
+    | '/accounting/reports/profit-loss'
+    | '/accounting/reports/reconciliation'
     | '/accounting/vendors/$id'
     | '/accounting/vendors/new'
     | '/accounting/bills/'
@@ -513,6 +579,12 @@ export interface FileRouteTypes {
     | '/accounting/expenses/new'
     | '/accounting/journals/$id'
     | '/accounting/journals/new'
+    | '/accounting/reports/ap-aging'
+    | '/accounting/reports/ar-aging'
+    | '/accounting/reports/balance-sheet'
+    | '/accounting/reports/cash-activity'
+    | '/accounting/reports/profit-loss'
+    | '/accounting/reports/reconciliation'
     | '/accounting/vendors/$id'
     | '/accounting/vendors/new'
     | '/accounting/bills'
@@ -560,6 +632,12 @@ export interface FileRouteTypes {
     | '/_app/accounting/expenses/new'
     | '/_app/accounting/journals/$id'
     | '/_app/accounting/journals/new'
+    | '/_app/accounting/reports/ap-aging'
+    | '/_app/accounting/reports/ar-aging'
+    | '/_app/accounting/reports/balance-sheet'
+    | '/_app/accounting/reports/cash-activity'
+    | '/_app/accounting/reports/profit-loss'
+    | '/_app/accounting/reports/reconciliation'
     | '/_app/accounting/vendors/$id'
     | '/_app/accounting/vendors/new'
     | '/_app/accounting/bills/'
@@ -848,6 +926,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountingVendorsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/accounting/reports/reconciliation': {
+      id: '/_app/accounting/reports/reconciliation'
+      path: '/accounting/reports/reconciliation'
+      fullPath: '/accounting/reports/reconciliation'
+      preLoaderRoute: typeof AppAccountingReportsReconciliationRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/reports/profit-loss': {
+      id: '/_app/accounting/reports/profit-loss'
+      path: '/accounting/reports/profit-loss'
+      fullPath: '/accounting/reports/profit-loss'
+      preLoaderRoute: typeof AppAccountingReportsProfitLossRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/reports/cash-activity': {
+      id: '/_app/accounting/reports/cash-activity'
+      path: '/accounting/reports/cash-activity'
+      fullPath: '/accounting/reports/cash-activity'
+      preLoaderRoute: typeof AppAccountingReportsCashActivityRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/reports/balance-sheet': {
+      id: '/_app/accounting/reports/balance-sheet'
+      path: '/accounting/reports/balance-sheet'
+      fullPath: '/accounting/reports/balance-sheet'
+      preLoaderRoute: typeof AppAccountingReportsBalanceSheetRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/reports/ar-aging': {
+      id: '/_app/accounting/reports/ar-aging'
+      path: '/accounting/reports/ar-aging'
+      fullPath: '/accounting/reports/ar-aging'
+      preLoaderRoute: typeof AppAccountingReportsArAgingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounting/reports/ap-aging': {
+      id: '/_app/accounting/reports/ap-aging'
+      path: '/accounting/reports/ap-aging'
+      fullPath: '/accounting/reports/ap-aging'
+      preLoaderRoute: typeof AppAccountingReportsApAgingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/accounting/journals/new': {
       id: '/_app/accounting/journals/new'
       path: '/accounting/journals/new'
@@ -931,6 +1051,12 @@ interface AppRouteChildren {
   AppAccountingExpensesNewRoute: typeof AppAccountingExpensesNewRoute
   AppAccountingJournalsIdRoute: typeof AppAccountingJournalsIdRoute
   AppAccountingJournalsNewRoute: typeof AppAccountingJournalsNewRoute
+  AppAccountingReportsApAgingRoute: typeof AppAccountingReportsApAgingRoute
+  AppAccountingReportsArAgingRoute: typeof AppAccountingReportsArAgingRoute
+  AppAccountingReportsBalanceSheetRoute: typeof AppAccountingReportsBalanceSheetRoute
+  AppAccountingReportsCashActivityRoute: typeof AppAccountingReportsCashActivityRoute
+  AppAccountingReportsProfitLossRoute: typeof AppAccountingReportsProfitLossRoute
+  AppAccountingReportsReconciliationRoute: typeof AppAccountingReportsReconciliationRoute
   AppAccountingVendorsIdRoute: typeof AppAccountingVendorsIdRoute
   AppAccountingVendorsNewRoute: typeof AppAccountingVendorsNewRoute
   AppAccountingBillsIndexRoute: typeof AppAccountingBillsIndexRoute
@@ -977,6 +1103,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountingExpensesNewRoute: AppAccountingExpensesNewRoute,
   AppAccountingJournalsIdRoute: AppAccountingJournalsIdRoute,
   AppAccountingJournalsNewRoute: AppAccountingJournalsNewRoute,
+  AppAccountingReportsApAgingRoute: AppAccountingReportsApAgingRoute,
+  AppAccountingReportsArAgingRoute: AppAccountingReportsArAgingRoute,
+  AppAccountingReportsBalanceSheetRoute: AppAccountingReportsBalanceSheetRoute,
+  AppAccountingReportsCashActivityRoute: AppAccountingReportsCashActivityRoute,
+  AppAccountingReportsProfitLossRoute: AppAccountingReportsProfitLossRoute,
+  AppAccountingReportsReconciliationRoute:
+    AppAccountingReportsReconciliationRoute,
   AppAccountingVendorsIdRoute: AppAccountingVendorsIdRoute,
   AppAccountingVendorsNewRoute: AppAccountingVendorsNewRoute,
   AppAccountingBillsIndexRoute: AppAccountingBillsIndexRoute,
