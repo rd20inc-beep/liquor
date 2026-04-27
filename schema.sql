@@ -1494,6 +1494,153 @@ CREATE TRIGGER customers_org_match
     BEFORE INSERT OR UPDATE ON customers
     FOR EACH ROW EXECUTE FUNCTION customers_org_match();
 
+-- bills: vendor + expense_category + gl_account_code must all share org_id
+CREATE OR REPLACE FUNCTION bills_org_match() RETURNS trigger AS $$
+DECLARE
+    other_org uuid;
+BEGIN
+    SELECT org_id INTO other_org FROM vendors WHERE id = NEW.vendor_id;
+    IF other_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'bills.vendor_id %: org % does not match bill org %',
+            NEW.vendor_id, other_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.expense_category_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM expense_categories WHERE id = NEW.expense_category_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'bills.expense_category_id %: org % does not match bill org %',
+                NEW.expense_category_id, other_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM gl_accounts
+        WHERE org_id = NEW.org_id AND code = NEW.gl_account_code
+    ) THEN
+        RAISE EXCEPTION 'bills.gl_account_code %: not found in org %',
+            NEW.gl_account_code, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER bills_org_match
+    BEFORE INSERT OR UPDATE ON bills
+    FOR EACH ROW EXECUTE FUNCTION bills_org_match();
+
+-- bill_payments: bill + vendor in same org; bill.vendor_id must equal
+-- bp.vendor_id; pay_account_code must exist in same org
+CREATE OR REPLACE FUNCTION bill_payments_org_match() RETURNS trigger AS $$
+DECLARE
+    bill_org uuid;
+    bill_vendor uuid;
+    vendor_org uuid;
+BEGIN
+    SELECT org_id, vendor_id INTO bill_org, bill_vendor
+        FROM bills WHERE id = NEW.bill_id;
+    IF bill_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'bill_payments.bill_id %: bill org % does not match payment org %',
+            NEW.bill_id, bill_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    IF bill_vendor IS DISTINCT FROM NEW.vendor_id THEN
+        RAISE EXCEPTION 'bill_payments.vendor_id %: does not match bill.vendor_id %',
+            NEW.vendor_id, bill_vendor USING ERRCODE = 'check_violation';
+    END IF;
+    SELECT org_id INTO vendor_org FROM vendors WHERE id = NEW.vendor_id;
+    IF vendor_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'bill_payments.vendor_id %: vendor org % does not match payment org %',
+            NEW.vendor_id, vendor_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM gl_accounts
+        WHERE org_id = NEW.org_id AND code = NEW.pay_account_code
+    ) THEN
+        RAISE EXCEPTION 'bill_payments.pay_account_code %: not found in org %',
+            NEW.pay_account_code, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER bill_payments_org_match
+    BEFORE INSERT OR UPDATE ON bill_payments
+    FOR EACH ROW EXECUTE FUNCTION bill_payments_org_match();
+
+-- expenses: every linked entity (category, vendor, vehicle, warehouse, user)
+-- must share the org; gl_account_code and pay_account_code must exist in org.
+CREATE OR REPLACE FUNCTION expenses_org_match() RETURNS trigger AS $$
+DECLARE
+    other_org uuid;
+BEGIN
+    IF NEW.expense_category_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM expense_categories WHERE id = NEW.expense_category_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'expenses.expense_category_id %: org mismatch', NEW.expense_category_id
+                USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.vendor_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM vendors WHERE id = NEW.vendor_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'expenses.vendor_id %: org mismatch', NEW.vendor_id
+                USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.vehicle_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM vehicles WHERE id = NEW.vehicle_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'expenses.vehicle_id %: org mismatch', NEW.vehicle_id
+                USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.warehouse_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM warehouses WHERE id = NEW.warehouse_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'expenses.warehouse_id %: org mismatch', NEW.warehouse_id
+                USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.user_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM users WHERE id = NEW.user_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'expenses.user_id %: org mismatch', NEW.user_id
+                USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM gl_accounts
+        WHERE org_id = NEW.org_id AND code = NEW.gl_account_code
+    ) THEN
+        RAISE EXCEPTION 'expenses.gl_account_code %: not found in org %',
+            NEW.gl_account_code, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM gl_accounts
+        WHERE org_id = NEW.org_id AND code = NEW.pay_account_code
+    ) THEN
+        RAISE EXCEPTION 'expenses.pay_account_code %: not found in org %',
+            NEW.pay_account_code, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER expenses_org_match
+    BEFORE INSERT OR UPDATE ON expenses
+    FOR EACH ROW EXECUTE FUNCTION expenses_org_match();
+
+-- expense_categories: gl_account_code must exist in same org
+CREATE OR REPLACE FUNCTION expense_categories_org_match() RETURNS trigger AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM gl_accounts
+        WHERE org_id = NEW.org_id AND code = NEW.gl_account_code
+    ) THEN
+        RAISE EXCEPTION 'expense_categories.gl_account_code %: not found in org %',
+            NEW.gl_account_code, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER expense_categories_org_match
+    BEFORE INSERT OR UPDATE ON expense_categories
+    FOR EACH ROW EXECUTE FUNCTION expense_categories_org_match();
+
 -- ar_ledger: validate running_balance = prior_running_balance + debit - credit
 -- per customer. The advisory lock serializes concurrent inserts for the same
 -- customer so two BEFORE-triggers can't read stale prior values. The app
