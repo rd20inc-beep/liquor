@@ -1641,6 +1641,181 @@ CREATE TRIGGER expense_categories_org_match
     BEFORE INSERT OR UPDATE ON expense_categories
     FOR EACH ROW EXECUTE FUNCTION expense_categories_org_match();
 
+-- sales_orders: customer must share the order's org
+CREATE OR REPLACE FUNCTION sales_orders_org_match() RETURNS trigger AS $$
+DECLARE
+    c_org uuid;
+BEGIN
+    SELECT org_id INTO c_org FROM customers WHERE id = NEW.customer_id;
+    IF c_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'sales_orders.customer_id %: org % does not match order org %',
+            NEW.customer_id, c_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER sales_orders_org_match
+    BEFORE INSERT OR UPDATE ON sales_orders
+    FOR EACH ROW EXECUTE FUNCTION sales_orders_org_match();
+
+-- invoices: customer + order must share the invoice's org
+CREATE OR REPLACE FUNCTION invoices_org_match() RETURNS trigger AS $$
+DECLARE
+    c_org uuid;
+    o_org uuid;
+BEGIN
+    SELECT org_id INTO c_org FROM customers WHERE id = NEW.customer_id;
+    IF c_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'invoices.customer_id %: org % does not match invoice org %',
+            NEW.customer_id, c_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    SELECT org_id INTO o_org FROM sales_orders WHERE id = NEW.order_id;
+    IF o_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'invoices.order_id %: org % does not match invoice org %',
+            NEW.order_id, o_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER invoices_org_match
+    BEFORE INSERT ON invoices
+    FOR EACH ROW EXECUTE FUNCTION invoices_org_match();
+
+-- payment_allocations: payment + invoice must share the same org AND the same
+-- customer. Catches the case where someone tries to apply customer A's payment
+-- to customer B's invoice.
+CREATE OR REPLACE FUNCTION payment_allocations_org_match() RETURNS trigger AS $$
+DECLARE
+    p_org uuid; p_cust uuid;
+    i_org uuid; i_cust uuid;
+BEGIN
+    SELECT org_id, customer_id INTO p_org, p_cust FROM payments WHERE id = NEW.payment_id;
+    SELECT org_id, customer_id INTO i_org, i_cust FROM invoices WHERE id = NEW.invoice_id;
+    IF p_org IS DISTINCT FROM i_org THEN
+        RAISE EXCEPTION 'payment_allocations: payment % (org %), invoice % (org %)',
+            NEW.payment_id, p_org, NEW.invoice_id, i_org USING ERRCODE = 'check_violation';
+    END IF;
+    IF p_cust IS DISTINCT FROM i_cust THEN
+        RAISE EXCEPTION 'payment_allocations: payment customer % does not match invoice customer %',
+            p_cust, i_cust USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER payment_allocations_org_match
+    BEFORE INSERT OR UPDATE ON payment_allocations
+    FOR EACH ROW EXECUTE FUNCTION payment_allocations_org_match();
+
+-- credit_notes: customer in same org; if invoice_id set, invoice org/customer
+-- must match the credit note.
+CREATE OR REPLACE FUNCTION credit_notes_org_match() RETURNS trigger AS $$
+DECLARE
+    c_org uuid;
+    i_org uuid;
+    i_cust uuid;
+BEGIN
+    SELECT org_id INTO c_org FROM customers WHERE id = NEW.customer_id;
+    IF c_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'credit_notes.customer_id %: org % does not match cn org %',
+            NEW.customer_id, c_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.invoice_id IS NOT NULL THEN
+        SELECT org_id, customer_id INTO i_org, i_cust FROM invoices WHERE id = NEW.invoice_id;
+        IF i_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'credit_notes.invoice_id %: invoice org % does not match cn org %',
+                NEW.invoice_id, i_org, NEW.org_id USING ERRCODE = 'check_violation';
+        END IF;
+        IF i_cust IS DISTINCT FROM NEW.customer_id THEN
+            RAISE EXCEPTION 'credit_notes.invoice %: invoice customer % differs from cn customer %',
+                NEW.invoice_id, i_cust, NEW.customer_id USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER credit_notes_org_match
+    BEFORE INSERT OR UPDATE ON credit_notes
+    FOR EACH ROW EXECUTE FUNCTION credit_notes_org_match();
+
+-- ar_ledger: customer must share the ledger's org. Append-only enforcement is
+-- already in place via forbid_mutation; this just adds a write-time check.
+CREATE OR REPLACE FUNCTION ar_ledger_org_match() RETURNS trigger AS $$
+DECLARE
+    c_org uuid;
+BEGIN
+    SELECT org_id INTO c_org FROM customers WHERE id = NEW.customer_id;
+    IF c_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'ar_ledger.customer_id %: org % does not match ledger org %',
+            NEW.customer_id, c_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER ar_ledger_org_match
+    BEFORE INSERT ON ar_ledger
+    FOR EACH ROW EXECUTE FUNCTION ar_ledger_org_match();
+
+-- gl_journal_lines: line.org must match journal.org and account.org; subledger
+-- references (customer/product/batch) must also share the line's org.
+CREATE OR REPLACE FUNCTION gl_journal_lines_org_match() RETURNS trigger AS $$
+DECLARE
+    j_org uuid;
+    a_org uuid;
+    other_org uuid;
+BEGIN
+    SELECT org_id INTO j_org FROM gl_journals WHERE id = NEW.journal_id;
+    IF j_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'gl_journal_lines: line org % does not match journal org %',
+            NEW.org_id, j_org USING ERRCODE = 'check_violation';
+    END IF;
+    SELECT org_id INTO a_org FROM gl_accounts WHERE id = NEW.account_id;
+    IF a_org IS DISTINCT FROM NEW.org_id THEN
+        RAISE EXCEPTION 'gl_journal_lines.account_id %: account org % does not match line org %',
+            NEW.account_id, a_org, NEW.org_id USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.customer_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM customers WHERE id = NEW.customer_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'gl_journal_lines.customer_id %: org mismatch', NEW.customer_id
+                USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.product_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM products WHERE id = NEW.product_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'gl_journal_lines.product_id %: org mismatch', NEW.product_id
+                USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    IF NEW.batch_id IS NOT NULL THEN
+        SELECT org_id INTO other_org FROM stock_batches WHERE id = NEW.batch_id;
+        IF other_org IS DISTINCT FROM NEW.org_id THEN
+            RAISE EXCEPTION 'gl_journal_lines.batch_id %: org mismatch', NEW.batch_id
+                USING ERRCODE = 'check_violation';
+        END IF;
+    END IF;
+    RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+-- Trigger names alphabetize within the same event/timing — this fires AFTER
+-- gl_lines_block_manual_control (g_l < g_l_o lexicographically).
+CREATE TRIGGER gl_lines_org_match
+    BEFORE INSERT ON gl_journal_lines
+    FOR EACH ROW EXECUTE FUNCTION gl_journal_lines_org_match();
+
+-- Deferred audit items intentionally not implemented:
+-- H12 (invoices.outstanding / bills.outstanding via trigger): the app
+--     currently maintains these correctly under app.bypass_lock with
+--     recomputeInvoiceStatus called after each change. Replacing with a
+--     trigger would entangle with the cheque-bounce reversal flow which
+--     keeps allocations as audit trail; deferred until that flow is
+--     simplified.
+-- H21 (customer_credit_state via trigger or view): the table caches
+--     snapshots (last_order_at, last_payment_at, broken_promises_30d,
+--     risk_score) that aren't trivially derivable from a view. The app's
+--     services/credit-state.refreshCreditState is the system of record;
+--     callers that mutate AR-relevant state must call it.
+
 -- ar_ledger: validate running_balance = prior_running_balance + debit - credit
 -- per customer. The advisory lock serializes concurrent inserts for the same
 -- customer so two BEFORE-triggers can't read stale prior values. The app
